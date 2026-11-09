@@ -104,7 +104,8 @@ async function main() {
   const sfx = new Sfx();
   const world = new World(scene);
   const effects = new Effects(scene);
-  const character = await loadCharacter(modelUrl);
+  const loadFill = $('load-fill');
+  const character = await loadCharacter(modelUrl, ratio => { loadFill.style.transform = `scaleX(${ratio})`; });
   scene.add(character.root);
   const animator = new Animator(character);
 

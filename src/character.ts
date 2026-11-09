@@ -46,10 +46,12 @@ export interface Character {
   bone(name: string): THREE.Bone;
 }
 
-export async function loadCharacter(url: string): Promise<Character> {
+export async function loadCharacter(url: string, onProgress?: (ratio: number) => void): Promise<Character> {
   const loader = new GLTFLoader();
   loader.register(parser => new SpecGlossPlugin(parser));
-  const gltf = await loader.loadAsync(url);
+  const gltf = await loader.loadAsync(url, event => {
+    if (event.total) onProgress?.(event.loaded / event.total);
+  });
 
   const meshes: THREE.SkinnedMesh[] = [];
   gltf.scene.traverse(o => { if ((o as THREE.SkinnedMesh).isSkinnedMesh) meshes.push(o as THREE.SkinnedMesh); });
