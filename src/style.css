@@ -29,6 +29,14 @@ html, body {
 
 #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 
+/* Softens the screen edges so the eye stays on the track. */
+#vignette {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 60%, transparent 55%, rgba(22, 48, 77, .26) 100%);
+  pointer-events: none;
+}
+
 #hud {
   position: fixed;
   top: max(16px, env(safe-area-inset-top));
