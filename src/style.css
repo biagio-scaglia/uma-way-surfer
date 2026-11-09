@@ -26,9 +26,9 @@ html, body {
 
 #hud {
   position: fixed;
-  top: 16px;
-  left: 16px;
-  right: 16px;
+  top: max(16px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  right: max(16px, env(safe-area-inset-right));
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
