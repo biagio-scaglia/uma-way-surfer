@@ -49,12 +49,13 @@ html, body {
 /* The panel is a saddle cloth hanging from the top edge of the screen. */
 .cloth {
   position: fixed;
-  top: 0;
+  top: -12px;
   left: clamp(16px, 6vw, 96px);
   width: min(430px, calc(100vw - 32px));
-  max-height: 100dvh;
+  max-height: calc(100dvh + 12px);
   overflow-y: auto;
-  padding: 44px 32px 40px;
+  padding: 56px 32px 40px;
+  animation: cloth-drop .42s cubic-bezier(.2, .8, .3, 1) both;
   background: var(--silk);
   border: 4px solid var(--snow);
   border-top: 0;
@@ -62,6 +63,12 @@ html, body {
   border-radius: 0 0 72px 12px;
   box-shadow: 0 18px 0 -6px var(--silk-deep);
   touch-action: pan-y;
+}
+
+@keyframes cloth-drop {
+  from { transform: translateY(-105%); }
+  70% { transform: translateY(8px); }
+  to { transform: none; }
 }
 
 .cloth h1, .cloth h2 {
@@ -111,7 +118,7 @@ html, body {
 a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
 
 @media (max-height: 620px) {
-  .cloth { padding: 22px 26px 26px; }
+  .cloth { padding: 34px 26px 26px; }
   .cloth h1 { font-size: 42px; margin-bottom: 14px; }
   .cloth h1 br:first-of-type { display: none; }
   .legend svg { max-height: 44px; }
@@ -121,7 +128,7 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
 
 /* Portrait: keep the panel short so the character stays visible underneath. */
 @media (max-aspect-ratio: 3/4) {
-  .cloth { left: 16px; padding: 22px 22px 24px; border-radius: 0 0 48px 12px; outline-width: 6px; }
+  .cloth { left: 16px; padding: 34px 22px 24px; border-radius: 0 0 48px 12px; outline-width: 6px; }
   .cloth h1 { font-size: clamp(38px, 11.5vw, 56px); margin-bottom: 12px; }
   .cloth h1 br:first-of-type { display: none; }
   .cloth p { margin-bottom: 10px; font-size: 15px; }
@@ -133,6 +140,7 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .cloth { animation: none; }
   .carrot-count.bump { animation: none; }
   .cta { transition: none; }
 }
