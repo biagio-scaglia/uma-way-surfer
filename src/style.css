@@ -74,13 +74,19 @@ html, body {
 .cloth h2 { font-size: 38px; margin-bottom: 8px; }
 .cloth p { margin: 0 0 18px; }
 
-.legend { list-style: none; margin: 0 0 22px; padding: 0; display: grid; gap: 7px; }
-.legend li { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; }
-.legend i { width: 22px; height: 22px; border-radius: 5px; border: 2px solid var(--snow); }
-.legend kbd { font: 900 14px/1 var(--body); }
-.hurdle { background: #f0641e; }
-.gate { background: #2467d6; }
-.block { background: #f2b632; }
+.legend { list-style: none; margin: 0 0 12px; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.legend li { font-size: 15px; line-height: 1.25; }
+.legend svg { display: block; width: 100%; height: auto; margin-bottom: 6px; border-radius: 8px; background: #bfe6f5; }
+.legend kbd {
+  display: inline-block;
+  padding: 2px 6px 3px;
+  border-radius: 5px;
+  background: var(--snow);
+  color: var(--ink);
+  font: 900 13px/1 var(--body);
+  box-shadow: 0 2px 0 var(--silk-deep);
+}
+.cloth .hint { margin-bottom: 20px; font-size: 14px; line-height: 1.35; }
 
 .cta {
   display: block;
@@ -107,7 +113,9 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
 @media (max-height: 620px) {
   .cloth { padding: 22px 26px 26px; }
   .cloth h1 { font-size: 42px; margin-bottom: 14px; }
-  .legend { display: none; }
+  .cloth h1 br:first-of-type { display: none; }
+  .legend svg { max-height: 44px; }
+  .cloth .hint { margin-bottom: 12px; }
   .cloth .credits { margin-top: 12px; }
 }
 
@@ -117,8 +125,9 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
   .cloth h1 { font-size: clamp(38px, 11.5vw, 56px); margin-bottom: 12px; }
   .cloth h1 br:first-of-type { display: none; }
   .cloth p { margin-bottom: 10px; font-size: 15px; }
-  .legend { margin-bottom: 14px; gap: 4px; font-size: 15px; }
-  .legend kbd { display: none; }
+  .legend { gap: 10px; }
+  .legend li { font-size: 14px; }
+  .cloth .hint { font-size: 13px; margin-bottom: 12px; }
   .cta { font-size: 22px; padding: 10px 16px 12px; }
   .cloth .credits { margin: 12px 0 0; font-size: 12px; line-height: 1.35; }
 }
