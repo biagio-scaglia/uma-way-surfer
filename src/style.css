@@ -158,7 +158,7 @@ html, body {
 .credits a { color: inherit; }
 a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
 
-@media (max-height: 700px) {
+@media (max-height: 740px) {
   .cloth { padding: 34px 26px 26px; }
   .cloth h1 { font-size: 42px; margin-bottom: 14px; }
   .cloth h1 br:first-of-type { display: none; }
