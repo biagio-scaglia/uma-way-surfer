@@ -23,7 +23,7 @@ const ui = {
   score: $('score'), carrots: $('carrots'), hud: $('hud'),
   title: $('title'), start: $('start'), status: $('status'),
   over: $('over'), overReason: $('over-reason'), overScore: $('over-score'), overBest: $('over-best'), restart: $('restart'),
-  paused: $('paused'), resume: $('resume'),
+  paused: $('paused'), resume: $('resume'), pause: $('pause'),
 };
 
 function readBest() {
@@ -80,6 +80,7 @@ async function main() {
   ui.start.addEventListener('click', start);
   ui.restart.addEventListener('click', start);
   ui.resume.addEventListener('click', () => sim.togglePause());
+  ui.pause.addEventListener('click', () => sim.togglePause());
 
   function resize() {
     const w = innerWidth, h = innerHeight;

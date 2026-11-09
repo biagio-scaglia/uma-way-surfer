@@ -12,9 +12,14 @@
 
   <div id="hud" hidden>
     <div id="score" aria-label="Punteggio">0</div>
-    <div class="carrot-count" aria-label="Carote raccolte">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#46a83f" d="M14 8c-1-4 0-6 2-7 0 2 1 3 2 4 2-1 4-1 5 1-2 1-3 2-5 3z"/><path fill="#ff8a1f" d="M15 7c2 1 3 3 2 5-3 5-9 9-15 11 2-6 6-12 11-15 1-1 1-1 2-1z"/></svg>
-      <span id="carrots">0</span>
+    <div class="hud-right">
+      <div class="carrot-count" aria-label="Carote raccolte">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#46a83f" d="M14 8c-1-4 0-6 2-7 0 2 1 3 2 4 2-1 4-1 5 1-2 1-3 2-5 3z"/><path fill="#ff8a1f" d="M15 7c2 1 3 3 2 5-3 5-9 9-15 11 2-6 6-12 11-15 1-1 1-1 2-1z"/></svg>
+        <span id="carrots">0</span>
+      </div>
+      <button id="pause" class="icon-button" aria-label="Metti in pausa">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 5h4v14H7zM14 5h4v14h-4z"/></svg>
+      </button>
     </div>
   </div>
 
