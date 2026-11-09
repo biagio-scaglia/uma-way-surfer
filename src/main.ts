@@ -5,25 +5,38 @@ import './style.css';
 import * as THREE from 'three';
 import modelUrl from '../models/tokai_teio_-_uma_musume.glb?url';
 import { Animator } from './animation';
+import { Sfx } from './audio';
 import { loadCharacter } from './character';
+import { Effects } from './effects';
 import { bindInput } from './input';
-import { Sim, type Kind } from './sim';
+import { LANE_X, MILESTONE, Sim, type Kind } from './sim';
 import { World } from './world';
 
 const STEP = 1 / 120;
 const BEST_KEY = 'uma-way-surfer-best';
-const HIT_TEXT: Record<Kind, string> = {
-  hurdle: 'Hai urtato una staccionata.',
-  gate: 'Hai preso in pieno uno striscione.',
-  block: 'Hai sbattuto contro un box di partenza.',
+const SETTINGS_KEY = 'uma-way-surfer-settings';
+const CALM_PACE = 0.8;
+const RESTART_LOCK_MS = 500;
+const CUE_SECONDS = 1.15;
+const CUES_UNTIL_BEST = 600;
+const CARROT_COLORS = [0xff8412, 0xffc53d, 0xffffff];
+const CONFETTI = [0xc8173d, 0xffc53d, 0x1f62e0, 0xffffff, 0x5cb86b];
+const DUST = [0xe6d5ae, 0xf3eee3];
+const CUES: Record<Kind, [string, string]> = {
+  hurdle: ['↑', 'Salta'],
+  gate: ['↓', 'Scivola'],
+  block: ['← →', 'Cambia corsia'],
 };
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const ui = {
-  score: $('score'), carrots: $('carrots'), hud: $('hud'),
+  score: $('score'), carrots: $('carrots'), hud: $('hud'), lives: $('lives'),
+  goalFill: $('goal-fill'), goalLabel: $('goal-label'),
+  cue: $('cue'), cueKey: $('cue-key'), cueWord: $('cue-word'), toast: $('toast'),
   title: $('title'), start: $('start'), status: $('status'), titleBest: $('title-best'),
-  over: $('over'), overReason: $('over-reason'), overScore: $('over-score'), overDetail: $('over-detail'), overBest: $('over-best'), rosette: $('rosette'), restart: $('restart'),
+  over: $('over'), overScore: $('over-score'), overDetail: $('over-detail'), overBest: $('over-best'), rosette: $('rosette'), restart: $('restart'),
   paused: $('paused'), resume: $('resume'), pause: $('pause'),
+  settings: $('settings'), sound: $('toggle-sound'), calm: $('toggle-calm'),
 };
 
 function readBest() {
@@ -33,22 +46,38 @@ function saveBest(value: number) {
   try { localStorage.setItem(BEST_KEY, String(value)); } catch { /* best score is optional */ }
 }
 
+interface Settings { sound: boolean; calm: boolean }
+
+function readSettings(): Settings {
+  const fallback = { sound: true, calm: matchMedia('(prefers-reduced-motion: reduce)').matches };
+  try { return { ...fallback, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? '{}') }; } catch { return fallback; }
+}
+function saveSettings(settings: Settings) {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* settings are optional */ }
+}
+
 function skyTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = 2;
   canvas.height = 256;
   const ctx = canvas.getContext('2d')!;
   const gradient = ctx.createLinearGradient(0, 0, 0, 256);
-  gradient.addColorStop(0, '#4f9fe0');
-  gradient.addColorStop(0.42, '#a9dcf2');
-  gradient.addColorStop(0.62, '#ffe9df');
-  gradient.addColorStop(1, '#ffe9df');
+  gradient.addColorStop(0, '#6fb4e8');
+  gradient.addColorStop(0.42, '#b9e2f4');
+  gradient.addColorStop(0.62, '#fdeee6');
+  gradient.addColorStop(1, '#fdeee6');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 2, 256);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
+
+const retrigger = (element: HTMLElement, className: string) => {
+  element.classList.remove(className);
+  void element.offsetWidth;
+  element.classList.add(className);
+};
 
 async function main() {
   const canvas = $<HTMLCanvasElement>('game');
@@ -57,25 +86,51 @@ async function main() {
 
   const scene = new THREE.Scene();
   scene.background = skyTexture();
-  scene.fog = new THREE.Fog(0xffe9df, 70, 195);
-  scene.add(new THREE.HemisphereLight(0xfff5ee, 0x9fc58a, 1.5));
-  const sun = new THREE.DirectionalLight(0xffffff, 2.1);
+  scene.fog = new THREE.Fog(0xfdeee6, 70, 195);
+  scene.add(new THREE.HemisphereLight(0xfff5ee, 0xa8cf98, 1.25));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.75);
   sun.position.set(-4, 9, 7);
   scene.add(sun);
-  const faceFill = new THREE.DirectionalLight(0xffffff, 1.2);
-  faceFill.position.set(1, 4, -8);
+  const faceFill = new THREE.DirectionalLight(0xffffff, 1);
+  faceFill.position.set(0, 0.6, -8);
   scene.add(faceFill);
 
-  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 500);
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 900);
   const look = new THREE.Vector3();
 
   const sim = new Sim();
+  const sfx = new Sfx();
   const world = new World(scene);
+  const effects = new Effects(scene);
   const character = await loadCharacter(modelUrl);
   scene.add(character.root);
   const animator = new Animator(character);
 
-  const start = () => { sim.start(); };
+  const settings = readSettings();
+  function applySettings() {
+    sfx.muted = !settings.sound;
+    effects.calm = settings.calm;
+    ui.sound.setAttribute('aria-pressed', String(settings.sound));
+    ui.calm.setAttribute('aria-pressed', String(settings.calm));
+    saveSettings(settings);
+  }
+  applySettings();
+  ui.sound.addEventListener('click', () => { settings.sound = !settings.sound; applySettings(); });
+  ui.calm.addEventListener('click', () => { settings.calm = !settings.calm; applySettings(); });
+  addEventListener('pointerdown', () => sfx.unlock());
+  addEventListener('keydown', () => sfx.unlock());
+
+  let best = readBest();
+  let showCues = true;
+  let overAt = 0;
+
+  const start = () => {
+    if (sim.phase === 'over' && performance.now() - overAt < RESTART_LOCK_MS) return;
+    if (sim.phase !== 'ready' && sim.phase !== 'over') return;
+    sim.pace = settings.calm ? CALM_PACE : 1;
+    showCues = settings.calm || best < CUES_UNTIL_BEST;
+    sim.start();
+  };
   bindInput(sim, start);
   ui.start.addEventListener('click', start);
   ui.restart.addEventListener('click', start);
@@ -98,15 +153,18 @@ async function main() {
   addEventListener('resize', resize);
   resize();
 
-  let best = readBest();
   ui.titleBest.hidden = best === 0;
   ui.titleBest.textContent = `Il tuo record: ${best.toLocaleString('it-IT')}`;
+
   let intro = 1;
   let overShift = 0;
   let shake = 0;
   let shownPhase = '';
   let shownScore = -1;
   let shownCarrots = -1;
+  let shownLives = -1;
+  let shownGoal = -1;
+  let shownCue: Kind | null = null;
   let accumulator = 0;
   let last = performance.now();
   let time = 0;
@@ -119,33 +177,92 @@ async function main() {
     ui.over.hidden = sim.phase !== 'over';
     ui.paused.hidden = sim.phase !== 'paused';
     ui.hud.hidden = sim.phase !== 'running';
+    ui.settings.hidden = sim.phase === 'running';
     if (sim.phase === 'over' && previous === 'running') {
-      shake = 1;
+      overAt = performance.now();
       const isRecord = sim.score > best;
       best = Math.max(best, sim.score);
       saveBest(best);
-      ui.overReason.textContent = sim.hit ? HIT_TEXT[sim.hit] : '';
       ui.overScore.textContent = sim.score.toLocaleString('it-IT');
       const carrotLabel = sim.carrotsTaken === 1 ? 'carota' : 'carote';
       ui.overDetail.textContent = `${Math.floor(sim.distance).toLocaleString('it-IT')} metri + ${sim.carrotsTaken} ${carrotLabel} × 10`;
       ui.rosette.hidden = !isRecord;
       ui.overBest.hidden = isRecord;
       ui.overBest.textContent = `Il tuo record: ${best.toLocaleString('it-IT')}`;
-      ui.restart.focus();
+      ui.restart.focus({ preventScroll: true });
     }
-    if (sim.phase === 'paused') ui.resume.focus();
+    if (sim.phase === 'paused') ui.resume.focus({ preventScroll: true });
   }
 
   function syncHud() {
     if (sim.score !== shownScore) ui.score.textContent = (shownScore = sim.score).toLocaleString('it-IT');
     if (sim.carrotsTaken !== shownCarrots) {
       ui.carrots.textContent = String(shownCarrots = sim.carrotsTaken);
-      if (shownCarrots > 0) {
-        ui.carrots.parentElement!.classList.remove('bump');
-        void ui.carrots.parentElement!.offsetWidth;
-        ui.carrots.parentElement!.classList.add('bump');
+      if (shownCarrots > 0) retrigger(ui.carrots.parentElement!, 'bump');
+    }
+    if (sim.lives !== shownLives) {
+      shownLives = sim.lives;
+      [...ui.lives.children].forEach((icon, i) => icon.classList.toggle('lost', i >= sim.lives));
+      ui.lives.setAttribute('aria-label', `Ferri di cavallo rimasti: ${sim.lives}`);
+    }
+    if (sim.nextMilestone !== shownGoal) {
+      shownGoal = sim.nextMilestone;
+      ui.goalLabel.textContent = `${shownGoal.toLocaleString('it-IT')} m`;
+    }
+    const progress = 1 - (sim.nextMilestone - sim.distance) / MILESTONE;
+    ui.goalFill.style.transform = `scaleX(${Math.max(0, Math.min(1, progress))})`;
+  }
+
+  /** While learning, shows the move for the obstacle straight ahead, at the moment it matters. */
+  function syncCue() {
+    let cue: Kind | null = null;
+    if (sim.phase === 'running' && showCues) {
+      let soonest = CUE_SECONDS;
+      for (const o of sim.obstacles) {
+        const eta = (o.s - sim.distance) / sim.speed;
+        if (o.lane === sim.lane && eta > 0 && eta < soonest) { soonest = eta; cue = o.kind; }
+      }
+      if ((cue === 'hurdle' && sim.airborne) || (cue === 'gate' && sim.sliding)) cue = null;
+    }
+    if (cue === shownCue) return;
+    shownCue = cue;
+    ui.cue.hidden = !cue;
+    if (!cue) return;
+    ui.cue.dataset.kind = cue;
+    [ui.cueKey.textContent, ui.cueWord.textContent] = CUES[cue];
+  }
+
+  function drainEvents() {
+    for (const event of sim.events) {
+      switch (event.type) {
+        case 'carrot':
+          sfx.carrot();
+          effects.burst(LANE_X[event.lane], event.y, 0, 9, CARROT_COLORS);
+          break;
+        case 'jump':
+          sfx.jump();
+          break;
+        case 'slide':
+          sfx.slide();
+          effects.burst(sim.x, 0.08, 0.3, 10, DUST, { speed: 2, size: 0.11, scroll: 0.7 });
+          break;
+        case 'land':
+          effects.burst(sim.x, 0.08, 0.1, 7, DUST, { speed: 2, size: 0.1, scroll: 0.7 });
+          break;
+        case 'hit':
+          shake = 1;
+          if (sim.lives > 0) sfx.hit(); else sfx.gameOver();
+          retrigger(ui.lives, 'hurt');
+          break;
+        case 'milestone':
+          sfx.milestone();
+          ui.toast.textContent = `${event.meters.toLocaleString('it-IT')} m!`;
+          retrigger(ui.toast, 'show');
+          effects.burst(sim.x, 2, -3, 46, CONFETTI, { speed: 6, size: 0.065, life: 1.1, scroll: 0.5 });
+          break;
       }
     }
+    sim.events.length = 0;
   }
 
   function placeCamera(dt: number) {
@@ -161,7 +278,7 @@ async function main() {
     const viewShift = portrait ? intro * titleBottom / 2 : 0;
     if (viewShift > 0.5) camera.setViewOffset(innerWidth, innerHeight, 0, -viewShift, innerWidth, innerHeight);
     else if (camera.view?.enabled) camera.clearViewOffset();
-    const quake = shake * shake * 0.25;
+    const quake = settings.calm ? 0 : shake * shake * 0.25;
     camera.position.set(
       sim.x * 0.7 + Math.sin(angle) * radius + Math.sin(time * 61) * quake,
       height + sim.y * 0.35 + Math.sin(time * 73) * quake,
@@ -183,10 +300,14 @@ async function main() {
     }
 
     animator.update(dt, sim);
+    character.root.visible = settings.calm || sim.invincibleT === 0 || Math.floor(time * 10) % 2 === 0;
     world.sync(sim, time);
+    drainEvents();
+    effects.update(dt, sim.phase === 'running' ? sim.speed : 0, time);
     placeCamera(dt);
     syncScreens();
     syncHud();
+    syncCue();
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
   }
