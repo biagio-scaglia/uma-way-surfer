@@ -60,7 +60,7 @@ function saveSettings(settings: Settings) {
 
 function skyTexture() {
   const canvas = document.createElement('canvas');
-  canvas.width = 2;
+  canvas.width = 512;
   canvas.height = 256;
   const ctx = canvas.getContext('2d')!;
   const gradient = ctx.createLinearGradient(0, 0, 0, 256);
@@ -69,7 +69,13 @@ function skyTexture() {
   gradient.addColorStop(0.62, '#fdeee6');
   gradient.addColorStop(1, '#fdeee6');
   ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 2, 256);
+  ctx.fillRect(0, 0, 512, 256);
+  const sun = ctx.createRadialGradient(390, 46, 6, 390, 46, 120);
+  sun.addColorStop(0, 'rgba(255, 248, 220, .95)');
+  sun.addColorStop(0.16, 'rgba(255, 244, 205, .55)');
+  sun.addColorStop(1, 'rgba(255, 244, 205, 0)');
+  ctx.fillStyle = sun;
+  ctx.fillRect(0, 0, 512, 256);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
