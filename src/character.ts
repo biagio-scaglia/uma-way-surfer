@@ -87,7 +87,8 @@ export async function loadCharacter(url: string, onProgress?: (ratio: number) =>
     mesh.bind(skeleton, mesh.bindMatrix);
 
     const small = mesh.geometry.index!.count / 3 < 100;
-    if (!small && !/eye|mayu/.test(source.name)) addOutline(mesh, outlineMaterial);
+    // No outline on the face: the expanded hull shows through the lips as a black gash.
+    if (!small && !/eye|mayu|face/.test(source.name)) addOutline(mesh, outlineMaterial);
   }
 
   gltf.scene.updateMatrixWorld(true);
