@@ -21,7 +21,7 @@ const HIT_TEXT: Record<Kind, string> = {
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const ui = {
   score: $('score'), carrots: $('carrots'), hud: $('hud'),
-  title: $('title'), start: $('start'), status: $('status'),
+  title: $('title'), start: $('start'), status: $('status'), titleBest: $('title-best'),
   over: $('over'), overReason: $('over-reason'), overScore: $('over-score'), overBest: $('over-best'), restart: $('restart'),
   paused: $('paused'), resume: $('resume'), pause: $('pause'),
 };
@@ -93,6 +93,8 @@ async function main() {
   resize();
 
   let best = readBest();
+  ui.titleBest.hidden = best === 0;
+  ui.titleBest.textContent = `Il tuo record: ${best.toLocaleString('it-IT')}`;
   let intro = 1;
   let overShift = 0;
   let shake = 0;
