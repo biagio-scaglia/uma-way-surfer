@@ -18,6 +18,7 @@ const SETTINGS_KEY = 'uma-way-surfer-settings';
 const CALM_PACE = 0.8;
 const RESTART_LOCK_MS = 500;
 const COUNT_UP_MS = 650;
+const SKY_ASPECT = 2;
 const PANEL_LEAVE_MS = 220;
 const CUE_SECONDS = 1.15;
 const CUES_UNTIL_BEST = 600;
@@ -93,7 +94,8 @@ async function main() {
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
   const scene = new THREE.Scene();
-  scene.background = skyTexture();
+  const sky = skyTexture();
+  scene.background = sky;
   scene.fog = new THREE.Fog(0xfdeee6, 70, 195);
   scene.add(new THREE.HemisphereLight(0xfff5ee, 0xa8cf98, 1.25));
   const sun = new THREE.DirectionalLight(0xffffff, 1.75);
@@ -157,6 +159,9 @@ async function main() {
     camera.aspect = w / h;
     camera.fov = w < h ? 76 : 60;
     camera.updateProjectionMatrix();
+    // Crop the sky instead of stretching it, so the sun stays round on any screen.
+    sky.repeat.x = Math.min(1, w / h / SKY_ASPECT);
+    sky.offset.x = (1 - sky.repeat.x) / 2;
     measureTitle();
   }
   addEventListener('resize', resize);
@@ -351,7 +356,7 @@ async function main() {
     requestAnimationFrame(frame);
   }
 
-  if (import.meta.env.DEV) Object.assign(window, { __game: { sim, camera } });
+  if (import.meta.env.DEV) Object.assign(window, { __game: { sim, camera, scene } });
 
   ui.status.hidden = true;
   ui.start.hidden = false;
