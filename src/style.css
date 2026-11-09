@@ -40,12 +40,23 @@ html, body {
   pointer-events: none;
   font-family: var(--display);
   color: var(--snow);
-  -webkit-text-stroke: 5px var(--ink);
-  paint-order: stroke fill;
 }
 
-#score { font-size: clamp(32px, 5.4vw, 52px); line-height: 1; font-variant-numeric: tabular-nums; }
-.hud-left { display: grid; gap: 6px; }
+/* The score hangs from the top edge, like a small version of the saddle cloth. */
+.hud-tab {
+  --edge: max(16px, env(safe-area-inset-top));
+  display: grid;
+  gap: 6px;
+  min-width: 118px;
+  margin-top: calc(-1 * var(--edge));
+  padding: calc(var(--edge) + 4px) 14px 11px;
+  background: var(--silk);
+  border: 3px solid var(--gold);
+  border-top: 0;
+  border-radius: 0 0 22px 8px;
+  box-shadow: 0 5px 0 var(--silk-deep);
+}
+#score { font-size: clamp(28px, 4.2vw, 42px); line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 3px 0 var(--silk-deep); }
 
 #lives { display: flex; gap: 3px; }
 #lives svg { width: clamp(26px, 3.2vw, 34px); height: clamp(26px, 3.2vw, 34px); transition: opacity .2s, transform .2s; }
@@ -60,14 +71,37 @@ html, body {
 #goal { width: min(30vw, 300px); margin-top: 6px; }
 .goal-track { height: 14px; padding: 3px; border-radius: 99px; background: var(--ink); }
 #goal-fill { height: 100%; border-radius: 99px; background: var(--gold); transform: scaleX(0); transform-origin: left; }
-#goal-label { margin-top: 3px; text-align: right; font-size: 17px; line-height: 1; -webkit-text-stroke-width: 4px; }
+#goal-label { margin-top: 3px; text-align: right; font-size: 17px; line-height: 1; -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; }
 
 .hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-.carrot-count { position: relative; display: flex; align-items: center; gap: 6px; font-size: clamp(26px, 4.5vw, 40px); line-height: 1; }
+.carrot-count {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 15px 5px 9px;
+  border: 3px solid var(--ink);
+  border-radius: 99px;
+  background: var(--snow);
+  color: var(--ink);
+  font-size: clamp(22px, 3.2vw, 30px);
+  line-height: 1;
+  box-shadow: 0 4px 0 rgba(22, 48, 77, .45);
+}
 .carrot-count svg { width: 1.05em; height: 1.05em; }
 .carrot-count.bump { animation: bump .22s ease-out; }
 @keyframes bump { 40% { transform: scale(1.22); } }
-.pop { position: absolute; right: 100%; top: .1em; margin-right: 10px; font-size: 22px; opacity: 0; }
+.pop {
+  position: absolute;
+  right: 100%;
+  top: .25em;
+  margin-right: 10px;
+  color: var(--gold);
+  font-size: 22px;
+  -webkit-text-stroke: 5px var(--ink);
+  paint-order: stroke fill;
+  opacity: 0;
+}
 .bump .pop { animation: pop .55s ease-out; }
 @keyframes pop {
   from { opacity: 1; transform: translateY(8px); }
