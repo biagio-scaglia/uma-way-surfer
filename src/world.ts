@@ -74,7 +74,8 @@ function seeded(seed: number) {
 function ground(parts: G[], z: number) {
   for (let i = 0; i < LOOP / TILE; i++) {
     const tz = z - i * TILE - TILE / 2;
-    parts.push(box(6.4, 0.1, TILE, 0, -0.05, tz, i % 2 ? COLORS.turfA : COLORS.turfB));
+    parts.push(box(6.4, 0.1, TILE / 2, 0, -0.05, tz + TILE / 4, i % 2 ? COLORS.turfA : COLORS.turfB));
+    parts.push(box(6.4, 0.1, TILE / 2, 0, -0.05, tz - TILE / 4, i % 2 ? COLORS.turfB : COLORS.turfA));
     for (const side of [-1, 1]) {
       parts.push(box(1, 0.1, TILE, side * 3.7, -0.05, tz, COLORS.path));
       parts.push(box(70, 0.1, TILE, side * 39.2, -0.08, tz, COLORS.verge));
