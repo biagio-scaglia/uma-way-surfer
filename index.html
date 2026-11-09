@@ -19,6 +19,8 @@
       <path fill="none" stroke="#ffc53d" stroke-width="4.400" stroke-linecap="round" d="M7 4v8a5 5 0 0 0 10 0V4"/>
       <path fill="#16304d" d="M6.200 7h1.600v1.600H6.200zM6.200 11.500h1.600v1.600H6.200zM16.200 7h1.600v1.600h-1.600zM16.200 11.500h1.600v1.600h-1.600z"/>
     </symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M7 4.800c0-1.300 1.400-2.100 2.500-1.400l11 7.200c1 .6 1 2.100 0 2.800l-11 7.200C8.400 21.300 7 20.500 7 19.200z"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" d="M6 3v18"/><path fill="currentColor" d="M7 4h12l-3.500 4.500L19 13H7z"/></symbol>
     <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.500" y="5" width="4" height="14" rx="1.300" fill="currentColor"/><rect x="13.500" y="5" width="4" height="14" rx="1.300" fill="currentColor"/></symbol>
     <symbol id="i-sound-on" viewBox="0 0 24 24"><path fill="currentColor" d="M3.500 9.500v5H7l5 4.200V5.300L7 9.500z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M15.500 9a4.200 4.200 0 0 1 0 6M18 6.500a8 8 0 0 1 0 11"/></symbol>
     <symbol id="i-sound-off" viewBox="0 0 24 24"><path fill="currentColor" d="M3.500 9.500v5H7l5 4.200V5.300L7 9.500z"/><path fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" d="m15.500 9.500 5 5m0-5-5 5"/></symbol>
@@ -69,13 +71,13 @@
     </ul>
     <p id="title-best" hidden></p>
     <p id="status" role="status">Sto caricando il personaggio…</p>
-    <button id="start" class="cta" hidden>Parti</button>
+    <button id="start" class="cta" hidden><svg aria-hidden="true"><use href="#i-play"/></svg>Parti</button>
     <p class="credits">Fangame non commerciale. Modello: <a href="https://sketchfab.com/3d-models/tokai-teio-uma-musume-c691aadbd14d4735810a01ac406fd940" target="_blank" rel="noopener">Tokai Teio - Uma Musume</a> di <a href="https://sketchfab.com/ansaldotoys2" target="_blank" rel="noopener">ansaldotoys2</a>, <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY 4.0</a>, con modifiche.</p>
   </section>
 
   <section id="paused" class="cloth" hidden>
     <h2>In pausa</h2>
-    <button id="resume" class="cta">Riprendi</button>
+    <button id="resume" class="cta"><svg aria-hidden="true"><use href="#i-play"/></svg>Riprendi</button>
   </section>
 
   <section id="over" class="cloth" hidden>
@@ -89,7 +91,7 @@
     </div>
     <p id="over-detail"></p>
     <p id="over-best"></p>
-    <button id="restart" class="cta">Corri ancora</button>
+    <button id="restart" class="cta"><svg aria-hidden="true"><use href="#i-play"/></svg>Corri ancora</button>
     <p class="credits">Modello: <a href="https://sketchfab.com/3d-models/tokai-teio-uma-musume-c691aadbd14d4735810a01ac406fd940" target="_blank" rel="noopener">Tokai Teio - Uma Musume</a> di <a href="https://sketchfab.com/ansaldotoys2" target="_blank" rel="noopener">ansaldotoys2</a>, <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY 4.0</a>, con modifiche.</p>
   </section>
 

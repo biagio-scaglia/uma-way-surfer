@@ -4,6 +4,7 @@
   --snow: #fffdf8;
   --ink: #16304d;
   --gold: #ffc53d;
+  --gold-deep: #c78a10;
   --jump: #ff5a1f;
   --slide: #1f62e0;
   --dodge: #ffc21f;
@@ -221,19 +222,26 @@ html, body {
 }
 
 .cta {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   width: 100%;
   padding: 13px 18px 15px;
   border: 0;
   border-radius: 999px;
-  background: var(--snow);
+  background: var(--gold);
   color: var(--ink);
   font: 400 26px/1 var(--display);
   cursor: pointer;
-  box-shadow: 0 6px 0 var(--silk-deep);
+  box-shadow: 0 6px 0 var(--gold-deep);
   transition: transform .08s, box-shadow .08s;
 }
-.cta:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--silk-deep); }
+.cta svg { width: 1em; height: 1em; }
+@media (hover: hover) {
+  .cta:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--gold-deep); }
+}
+.cta:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--gold-deep); }
 .cta:focus-visible { outline: 3px solid var(--snow); outline-offset: 4px; }
 
 .final { font: 400 clamp(52px, 10vh, 66px)/1 var(--display); font-variant-numeric: tabular-nums; text-shadow: 0 4px 0 var(--silk-deep); }
