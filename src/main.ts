@@ -3,7 +3,7 @@ import '@fontsource/zen-maru-gothic/500.css';
 import '@fontsource/zen-maru-gothic/900.css';
 import './style.css';
 import * as THREE from 'three';
-import modelUrl from '../models/meisho_doto_-_uma_musume.glb?url';
+import modelUrl from '../models/tokai_teio_-_uma_musume.glb?url';
 import { Animator } from './animation';
 import { loadCharacter } from './character';
 import { bindInput } from './input';
