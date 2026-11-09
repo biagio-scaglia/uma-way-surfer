@@ -17,6 +17,7 @@ const BEST_KEY = 'uma-way-surfer-best';
 const SETTINGS_KEY = 'uma-way-surfer-settings';
 const CALM_PACE = 0.8;
 const RESTART_LOCK_MS = 500;
+const COUNT_UP_MS = 650;
 const CUE_SECONDS = 1.15;
 const CUES_UNTIL_BEST = 600;
 const CARROT_COLORS = [0xff8412, 0xffc53d, 0xffffff];
@@ -34,7 +35,7 @@ const ui = {
   goal: $('goal'), goalMeters: $('goal-meters'),
   cue: $('cue'), cueKey: $('cue-key'), cueWord: $('cue-word'), toast: $('toast'),
   title: $('title'), start: $('start'), status: $('status'), titleBest: $('title-best'),
-  over: $('over'), overScore: $('over-score'), overDetail: $('over-detail'), overBest: $('over-best'), rosette: $('rosette'), restart: $('restart'),
+  over: $('over'), overScore: $('over-score'), overMeters: $('over-meters'), overCarrots: $('over-carrots'), overCarrotWord: $('over-carrot-word'), overBest: $('over-best'), rosette: $('rosette'), restart: $('restart'),
   paused: $('paused'), resume: $('resume'), pause: $('pause'),
   settings: $('settings'), sound: $('toggle-sound'), calm: $('toggle-calm'),
 };
@@ -169,6 +170,18 @@ async function main() {
   let last = performance.now();
   let time = 0;
 
+  function countUp(element: HTMLElement, to: number) {
+    const show = (value: number) => { element.textContent = value.toLocaleString('it-IT'); };
+    if (settings.calm || to === 0) { show(to); return; }
+    const started = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - started) / COUNT_UP_MS);
+      show(Math.round(to * (1 - (1 - t) ** 3)));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
   function syncScreens() {
     if (sim.phase === shownPhase) return;
     const previous = shownPhase;
@@ -181,14 +194,17 @@ async function main() {
     if (sim.phase === 'over' && previous === 'running') {
       overAt = performance.now();
       const isRecord = sim.score > best;
+      const missing = best - sim.score + 1;
       best = Math.max(best, sim.score);
       saveBest(best);
-      ui.overScore.textContent = sim.score.toLocaleString('it-IT');
-      const carrotLabel = sim.carrotsTaken === 1 ? 'carota' : 'carote';
-      ui.overDetail.textContent = `${Math.floor(sim.distance).toLocaleString('it-IT')} metri + ${sim.carrotsTaken} ${carrotLabel} × 10`;
+      countUp(ui.overScore, sim.score);
+      ui.overMeters.textContent = Math.floor(sim.distance).toLocaleString('it-IT');
+      ui.overCarrots.textContent = String(sim.carrotsTaken);
+      ui.overCarrotWord.textContent = sim.carrotsTaken === 1 ? 'carota' : 'carote';
       ui.rosette.hidden = !isRecord;
       ui.overBest.hidden = isRecord;
-      ui.overBest.textContent = `Il tuo record: ${best.toLocaleString('it-IT')}`;
+      ui.overBest.textContent = `Al record mancano ${missing.toLocaleString('it-IT')} ${missing === 1 ? 'punto' : 'punti'}.`;
+      if (isRecord) effects.burst(sim.x, 1.6, -1, 50, CONFETTI, { speed: 6, size: 0.065, life: 1.3, scroll: 0 });
       ui.restart.focus({ preventScroll: true });
     }
     if (sim.phase === 'paused') ui.resume.focus({ preventScroll: true });

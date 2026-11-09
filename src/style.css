@@ -320,6 +320,11 @@ html, body {
 }
 @keyframes rosette { from { transform: scale(0) rotate(-30deg); } }
 
+.stats { list-style: none; display: flex; gap: 8px; margin: 0 0 14px; padding: 0; }
+.stats li { display: flex; align-items: center; gap: 6px; padding: 5px 12px 6px 8px; border-radius: 10px; background: var(--silk-deep); font-size: 15px; }
+.stats svg { width: 20px; height: 20px; color: var(--gold); }
+.stats b { font: 400 18px/1 var(--display); }
+
 .cloth .credits { margin: 20px 0 0; font-size: 13px; line-height: 1.45; opacity: .95; }
 .credits a { color: inherit; }
 a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
