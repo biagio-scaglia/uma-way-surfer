@@ -22,7 +22,7 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 const ui = {
   score: $('score'), carrots: $('carrots'), hud: $('hud'),
   title: $('title'), start: $('start'), status: $('status'), titleBest: $('title-best'),
-  over: $('over'), overReason: $('over-reason'), overScore: $('over-score'), overBest: $('over-best'), restart: $('restart'),
+  over: $('over'), overReason: $('over-reason'), overScore: $('over-score'), overDetail: $('over-detail'), overBest: $('over-best'), restart: $('restart'),
   paused: $('paused'), resume: $('resume'), pause: $('pause'),
 };
 
@@ -120,6 +120,8 @@ async function main() {
       saveBest(best);
       ui.overReason.textContent = sim.hit ? HIT_TEXT[sim.hit] : '';
       ui.overScore.textContent = sim.score.toLocaleString('it-IT');
+      const carrotLabel = sim.carrotsTaken === 1 ? 'carota' : 'carote';
+      ui.overDetail.textContent = `${Math.floor(sim.distance).toLocaleString('it-IT')} metri + ${sim.carrotsTaken} ${carrotLabel} × 10`;
       ui.overBest.textContent = isRecord ? 'Nuovo record!' : `Record: ${best.toLocaleString('it-IT')}`;
       ui.restart.focus();
     }
