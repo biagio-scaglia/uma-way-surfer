@@ -196,7 +196,13 @@ html, body {
   line-height: .98;
   text-shadow: 0 4px 0 var(--silk-deep);
 }
-.cloth h1 { font-size: clamp(54px, 9.4vh, 76px); transform: rotate(-3deg); transform-origin: left top; margin-bottom: 28px; }
+.cloth h1 {
+  font-size: clamp(54px, 9.4vh, 76px);
+  transform: rotate(-3deg);
+  transform-origin: left top;
+  margin-bottom: 30px;
+  text-shadow: 0 2px 0 var(--gold), 0 4px 0 var(--gold), 0 6px 0 var(--silk-deep), 0 9px 0 var(--silk-deep);
+}
 .cloth h2 { font-size: 38px; margin-bottom: 14px; }
 .cloth p { margin: 0 0 18px; }
 
