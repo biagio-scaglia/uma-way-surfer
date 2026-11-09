@@ -138,6 +138,22 @@ html, body {
 
 .final { font: 400 clamp(52px, 10vh, 72px)/1 var(--display); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
 
+.final-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
+.rosette { position: relative; width: 84px; flex: none; animation: rosette .36s .34s cubic-bezier(.3, 1.6, .5, 1) backwards; }
+.rosette svg { display: block; width: 100%; height: auto; }
+.rosette span {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 77px;
+  display: grid;
+  place-items: center;
+  padding: 0 19px;
+  color: var(--ink);
+  font: 900 12px/1.05 var(--body);
+  text-align: center;
+}
+@keyframes rosette { from { transform: scale(0) rotate(-30deg); } }
+
 .cloth .credits { margin: 20px 0 0; font-size: 13px; line-height: 1.45; opacity: .95; }
 .credits a { color: inherit; }
 a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
@@ -165,7 +181,7 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cloth { animation: none; }
+  .cloth, .rosette { animation: none; }
   .carrot-count.bump, .bump .pop { animation: none; }
   .cta { transition: none; }
 }
