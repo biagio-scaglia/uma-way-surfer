@@ -4,44 +4,69 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#c8173d">
-  <link rel="icon" href="data:,">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%233fb13a' d='M14 8c-1-4 0-6 2-7 0 2 1 3 2 4 2-1 4-1 5 1-2 1-3 2-5 3z'/%3E%3Cpath fill='%23ff8412' d='M15 7c2 1 3 3 2 5-3 5-9 9-15 11 2-6 6-12 11-15 1-1 1-1 2-1z'/%3E%3C/svg%3E">
   <title>Uma Way Surfer</title>
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-carrot" viewBox="0 0 24 24">
+      <path fill="#3fb13a" stroke="#16304d" stroke-width="1.4" stroke-linejoin="round" d="M14 8c-1-4 0-6 2-7 0 2 1 3 2 4 2-1 4-1 5 1-2 1-3 2-5 3z"/>
+      <path fill="#ff8412" stroke="#16304d" stroke-width="1.4" stroke-linejoin="round" d="M15 7c2 1 3 3 2 5-3 5-9 9-15 11 2-6 6-12 11-15 1-1 1-1 2-1z"/>
+      <path fill="none" stroke="#c9580a" stroke-width="1.2" stroke-linecap="round" d="m11 10 2 2M8 13.500l2 2"/>
+    </symbol>
+    <symbol id="i-shoe" viewBox="0 0 24 24">
+      <path fill="none" stroke="#16304d" stroke-width="7.600" stroke-linecap="round" d="M7 4v8a5 5 0 0 0 10 0V4"/>
+      <path fill="none" stroke="#ffc53d" stroke-width="4.400" stroke-linecap="round" d="M7 4v8a5 5 0 0 0 10 0V4"/>
+      <path fill="#16304d" d="M6.200 7h1.600v1.600H6.200zM6.200 11.500h1.600v1.600H6.200zM16.200 7h1.600v1.600h-1.600zM16.200 11.500h1.600v1.600h-1.600z"/>
+    </symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.500" y="5" width="4" height="14" rx="1.300" fill="currentColor"/><rect x="13.500" y="5" width="4" height="14" rx="1.300" fill="currentColor"/></symbol>
+    <symbol id="i-sound-on" viewBox="0 0 24 24"><path fill="currentColor" d="M3.500 9.500v5H7l5 4.200V5.300L7 9.500z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M15.500 9a4.200 4.200 0 0 1 0 6M18 6.500a8 8 0 0 1 0 11"/></symbol>
+    <symbol id="i-sound-off" viewBox="0 0 24 24"><path fill="currentColor" d="M3.500 9.500v5H7l5 4.200V5.300L7 9.500z"/><path fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" d="m15.500 9.500 5 5m0-5-5 5"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path fill="currentColor" d="M4.500 19.500C4.500 10.500 10.500 5 20 4c0 9.500-5 15.500-12.500 15.500-1.100 0-2.100 0-3 0z"/><path fill="none" stroke="var(--leaf-vein, #fff)" stroke-width="1.500" stroke-linecap="round" d="M7 17c2.500-4 6-6.800 9.500-8.500"/></symbol>
+  </svg>
+
   <canvas id="game" aria-label="Pista di gioco"></canvas>
 
   <div id="hud" hidden>
-    <div id="score" aria-label="Punteggio">0</div>
+    <div class="hud-left">
+      <div id="score" aria-label="Punteggio">0</div>
+      <div id="lives" role="img" aria-label="Ferri di cavallo rimasti: 3">
+        <svg><use href="#i-shoe"/></svg><svg><use href="#i-shoe"/></svg><svg><use href="#i-shoe"/></svg>
+      </div>
+    </div>
+    <div id="goal">
+      <div class="goal-track"><div id="goal-fill"></div></div>
+      <div id="goal-label">250 m</div>
+    </div>
     <div class="hud-right">
       <div class="carrot-count" aria-label="Carote raccolte">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#46a83f" d="M14 8c-1-4 0-6 2-7 0 2 1 3 2 4 2-1 4-1 5 1-2 1-3 2-5 3z"/><path fill="#ff8a1f" d="M15 7c2 1 3 3 2 5-3 5-9 9-15 11 2-6 6-12 11-15 1-1 1-1 2-1z"/></svg>
+        <svg aria-hidden="true"><use href="#i-carrot"/></svg>
         <span id="carrots">0</span>
         <span class="pop" aria-hidden="true">+10</span>
       </div>
-      <button id="pause" class="icon-button" aria-label="Metti in pausa">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 5h4v14H7zM14 5h4v14h-4z"/></svg>
-      </button>
+      <button id="pause" class="icon-button" aria-label="Metti in pausa"><svg aria-hidden="true"><use href="#i-pause"/></svg></button>
     </div>
   </div>
 
+  <div id="cue" hidden aria-live="polite"><span id="cue-key"></span><span id="cue-word"></span></div>
+  <div id="toast" aria-hidden="true"></div>
+
   <section id="title" class="cloth">
     <h1>Uma <br>Way <br>Surfer</h1>
-    <p class="intro">Corri con Tokai Teio sul prato dell'ippodromo e raccogli più carote che puoi.</p>
     <ul class="legend">
       <li>
-        <svg viewBox="0 0 84 52" role="img" aria-label="Staccionata"><rect y="42" width="84" height="10" fill="#4faa5c"/><path fill="#fff" d="M18 14h4v28h-4zM62 14h4v28h-4z"/><rect x="14" y="27" width="56" height="6" fill="#f0641e"/><rect x="14" y="36" width="56" height="3" fill="#fff"/><rect x="14" y="16" width="56" height="8" rx="2" fill="#2f7d44"/></svg>
+        <svg viewBox="0 0 84 52" role="img" aria-label="Staccionata"><rect y="42" width="84" height="10" fill="#5cb86b"/><path fill="#fff" d="M18 14h4v28h-4zM62 14h4v28h-4z"/><rect x="14" y="27" width="56" height="6" fill="#ff5a1f"/><rect x="14" y="36" width="56" height="3" fill="#fff"/><rect x="14" y="16" width="56" height="8" rx="4" fill="#1f7a3f"/></svg>
         Salta <kbd>↑</kbd>
       </li>
       <li>
-        <svg viewBox="0 0 84 52" role="img" aria-label="Striscione"><rect y="42" width="84" height="10" fill="#4faa5c"/><path fill="#fff" d="M15 3h4v39h-4zM65 3h4v39h-4z"/><rect x="19" y="7" width="46" height="20" fill="#2467d6"/><path fill="#fff" d="M25 11h9l-4.500 11zM37.500 11h9l-4.500 11zM50 11h9l-4.500 11z"/></svg>
+        <svg viewBox="0 0 84 52" role="img" aria-label="Striscione"><rect y="42" width="84" height="10" fill="#5cb86b"/><path fill="#fff" d="M15 3h4v39h-4zM65 3h4v39h-4z"/><rect x="19" y="7" width="46" height="20" rx="2" fill="#1f62e0"/><path fill="#fff" d="M25 11h9l-4.500 11zM37.500 11h9l-4.500 11zM50 11h9l-4.500 11z"/></svg>
         Scivola <kbd>↓</kbd>
       </li>
       <li>
-        <svg viewBox="0 0 84 52" role="img" aria-label="Box di partenza"><rect y="42" width="84" height="10" fill="#4faa5c"/><rect x="24" y="8" width="36" height="34" fill="#f2b632"/><rect x="22" y="4" width="40" height="6" fill="#1c3250"/><rect x="30" y="14" width="24" height="28" fill="#1c3250"/><path fill="#f2b632" d="M30 20h24v4H30zM30 31h24v4H30z"/></svg>
+        <svg viewBox="0 0 84 52" role="img" aria-label="Box di partenza"><rect y="42" width="84" height="10" fill="#5cb86b"/><rect x="24" y="8" width="36" height="34" rx="2" fill="#ffc21f"/><rect x="22" y="4" width="40" height="6" rx="2" fill="#1c3250"/><rect x="30" y="14" width="24" height="28" rx="2" fill="#1c3250"/><path stroke="#ffc21f" stroke-width="4" stroke-linecap="round" d="m35 20 14 16m0-16L35 36"/></svg>
         Cambia corsia <kbd>← →</kbd>
       </li>
     </ul>
-    <p class="hint">Usa le frecce o scorri col dito. Spazio salta, Esc mette in pausa.</p>
     <p id="title-best" hidden></p>
     <p id="status" role="status">Sto caricando il personaggio…</p>
     <button id="start" class="cta" hidden>Parti</button>
@@ -50,17 +75,15 @@
 
   <section id="paused" class="cloth" hidden>
     <h2>In pausa</h2>
-    <p>Premi spazio o Invio per riprendere.</p>
     <button id="resume" class="cta">Riprendi</button>
   </section>
 
   <section id="over" class="cloth" hidden>
-    <h2>Corsa finita</h2>
-    <p id="over-reason"></p>
+    <h2>Bella corsa!</h2>
     <div class="final-row">
       <div class="final" id="over-score">0</div>
       <div id="rosette" class="rosette" hidden>
-        <svg viewBox="0 0 96 112" aria-hidden="true"><path fill="#8f0f30" d="M30 62 18 110l16-10 10 12 8-42z"/><path fill="#16304d" d="M66 62l12 48-16-10-10 12-8-42z"/><circle cx="48" cy="44" r="36" fill="#f2b632" stroke="#f2b632" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 18.850"/><circle cx="48" cy="44" r="29" fill="#fffdf8"/></svg>
+        <svg viewBox="0 0 96 112" aria-hidden="true"><path fill="#8f0f30" d="M30 62 18 110l16-10 10 12 8-42z"/><path fill="#16304d" d="M66 62l12 48-16-10-10 12-8-42z"/><circle cx="48" cy="44" r="36" fill="#ffc53d" stroke="#ffc53d" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 18.850"/><circle cx="48" cy="44" r="29" fill="#fffdf8"/></svg>
         <span>Nuovo record</span>
       </div>
     </div>
@@ -69,6 +92,18 @@
     <button id="restart" class="cta">Corri ancora</button>
     <p class="credits">Modello: <a href="https://sketchfab.com/3d-models/tokai-teio-uma-musume-c691aadbd14d4735810a01ac406fd940" target="_blank" rel="noopener">Tokai Teio - Uma Musume</a> di <a href="https://sketchfab.com/ansaldotoys2" target="_blank" rel="noopener">ansaldotoys2</a>, <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY 4.0</a>, con modifiche.</p>
   </section>
+
+  <div id="settings">
+    <button id="toggle-sound" class="pill" aria-pressed="true">
+      <svg class="when-on" aria-hidden="true"><use href="#i-sound-on"/></svg>
+      <svg class="when-off" aria-hidden="true"><use href="#i-sound-off"/></svg>
+      <span>Suoni</span>
+    </button>
+    <button id="toggle-calm" class="pill" aria-pressed="false" title="Meno effetti e ritmo più lento">
+      <svg aria-hidden="true"><use href="#i-leaf"/></svg>
+      <span>Modalità calma</span>
+    </button>
+  </div>
 
   <script type="module" src="/src/main.ts"></script>
 </body>
