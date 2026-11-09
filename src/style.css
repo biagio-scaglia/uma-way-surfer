@@ -243,6 +243,9 @@ html, body {
   pointer-events: none;
 }
 
+.cloth.leaving { animation: cloth-lift .22s ease-in forwards; }
+@keyframes cloth-lift { to { transform: translateY(-105%); } }
+
 @keyframes cloth-drop {
   from { transform: translateY(-105%); }
   70% { transform: translateY(8px); }
@@ -403,7 +406,7 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cloth, .rosette, #cue, #lives.hurt, .carrot-count.bump, .bump .pop { animation: none; }
+  .cloth, .cloth.leaving, .rosette, #cue, #lives.hurt, .carrot-count.bump, .bump .pop { animation: none; }
   #toast.show { animation: toast-still 1.1s linear; }
   .cta, #lives svg { transition: none; }
 }

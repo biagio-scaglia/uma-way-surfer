@@ -18,6 +18,7 @@ const SETTINGS_KEY = 'uma-way-surfer-settings';
 const CALM_PACE = 0.8;
 const RESTART_LOCK_MS = 500;
 const COUNT_UP_MS = 650;
+const PANEL_LEAVE_MS = 220;
 const CUE_SECONDS = 1.15;
 const CUES_UNTIL_BEST = 600;
 const CARROT_COLORS = [0xff8412, 0xffc53d, 0xffffff];
@@ -170,6 +171,21 @@ async function main() {
   let last = performance.now();
   let time = 0;
 
+  /** Shows a panel at once, or lets it lift off the screen before hiding it. */
+  function setPanel(panel: HTMLElement, visible: boolean) {
+    if (visible) {
+      panel.classList.remove('leaving');
+      panel.hidden = false;
+    } else if (!panel.hidden && !panel.classList.contains('leaving')) {
+      panel.classList.add('leaving');
+      setTimeout(() => {
+        if (!panel.classList.contains('leaving')) return;
+        panel.classList.remove('leaving');
+        panel.hidden = true;
+      }, settings.calm ? 0 : PANEL_LEAVE_MS);
+    }
+  }
+
   function countUp(element: HTMLElement, to: number) {
     const show = (value: number) => { element.textContent = value.toLocaleString('it-IT'); };
     if (settings.calm || to === 0) { show(to); return; }
@@ -186,9 +202,9 @@ async function main() {
     if (sim.phase === shownPhase) return;
     const previous = shownPhase;
     shownPhase = sim.phase;
-    ui.title.hidden = sim.phase !== 'ready';
-    ui.over.hidden = sim.phase !== 'over';
-    ui.paused.hidden = sim.phase !== 'paused';
+    setPanel(ui.title, sim.phase === 'ready');
+    setPanel(ui.over, sim.phase === 'over');
+    setPanel(ui.paused, sim.phase === 'paused');
     ui.hud.hidden = sim.phase !== 'running';
     ui.settings.hidden = sim.phase === 'running';
     if (sim.phase === 'over' && previous === 'running') {
