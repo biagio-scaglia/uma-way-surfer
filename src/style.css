@@ -82,7 +82,7 @@ html, body {
 .gate { background: #2467d6; }
 .block { background: #f2b632; }
 
-button {
+.cta {
   display: block;
   width: 100%;
   padding: 13px 18px 15px;
@@ -95,8 +95,8 @@ button {
   box-shadow: 0 6px 0 var(--silk-deep);
   transition: transform .08s, box-shadow .08s;
 }
-button:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--silk-deep); }
-button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.cta:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--silk-deep); }
+.cta:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 
 .final { font: 400 clamp(52px, 10vh, 72px)/1 var(--display); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
 
@@ -119,12 +119,12 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
   .cloth p { margin-bottom: 10px; font-size: 15px; }
   .legend { margin-bottom: 14px; gap: 4px; font-size: 15px; }
   .legend kbd { display: none; }
-  button { font-size: 22px; padding: 10px 16px 12px; }
+  .cta { font-size: 22px; padding: 10px 16px 12px; }
   .credits { margin: 12px 0 0; font-size: 11.5px; line-height: 1.35; }
   .cloth .credits { margin-bottom: 0; font-size: 11.5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .carrot-count.bump { animation: none; }
-  button { transition: none; }
+  .cta { transition: none; }
 }
