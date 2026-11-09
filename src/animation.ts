@@ -24,6 +24,9 @@ class Pose {
   }
 }
 
+const WAVE_EVERY = 6;
+const WAVE_LENGTH = 1.8;
+
 function idle(p: Pose, time: number) {
   const breath = Math.sin(time * 1.9) * 0.018;
   p.set('Hip', 0, 0, Math.sin(time * 0.8) * 0.012);
@@ -40,6 +43,13 @@ function idle(p: Pose, time: number) {
     p.set(`Arm_${side}`, 0.05, 0, -sign * 1.32);
     p.set(`Elbow_${side}`, 0, -sign * 0.22);
     p.set(`Wrist_${side}`, 0);
+  }
+
+  const cycle = (time % WAVE_EVERY) / WAVE_LENGTH;
+  if (cycle < 1) {
+    const wave = Math.sqrt(Math.sin(Math.PI * cycle));
+    p.set('Arm_R', 0.05 * (1 - wave), 0, 1.32 - 2.1 * wave);
+    p.set('Elbow_R', 0, 0.22 * (1 - wave), wave * (-0.85 + 0.32 * Math.sin(time * 11)));
   }
 }
 
