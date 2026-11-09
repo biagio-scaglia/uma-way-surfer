@@ -68,10 +68,35 @@ html, body {
   75% { transform: translateX(-3px); }
 }
 
-#goal { width: min(30vw, 300px); margin-top: 6px; }
-.goal-track { height: 14px; padding: 3px; border-radius: 99px; background: var(--ink); }
-#goal-fill { height: 100%; border-radius: 99px; background: var(--gold); transform: scaleX(0); transform-origin: left; }
-#goal-label { margin-top: 3px; text-align: right; font-size: 17px; line-height: 1; -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; }
+#goal { --p: 0; width: min(32vw, 320px); margin-top: 10px; }
+.goal-track { position: relative; height: 16px; padding: 3px; border-radius: 99px; background: var(--ink); }
+#goal-fill { height: 100%; border-radius: 99px; background: var(--gold); transform: scaleX(var(--p)); transform-origin: left; }
+#goal-runner {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--p) * 100%);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  background: var(--snow);
+  transform: translate(-50%, -50%);
+}
+#goal-runner svg { width: 20px; height: 20px; }
+#goal-label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 9px;
+  font-size: 17px;
+  line-height: 1;
+  -webkit-text-stroke: 4px var(--ink);
+  paint-order: stroke fill;
+}
+#goal-label svg { width: 17px; height: 17px; color: var(--snow); filter: drop-shadow(0 0 1px var(--ink)) drop-shadow(0 0 1px var(--ink)); }
 
 .hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
 .carrot-count {

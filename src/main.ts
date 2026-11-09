@@ -31,7 +31,7 @@ const CUES: Record<Kind, [string, string]> = {
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const ui = {
   score: $('score'), carrots: $('carrots'), hud: $('hud'), lives: $('lives'),
-  goalFill: $('goal-fill'), goalLabel: $('goal-label'),
+  goal: $('goal'), goalMeters: $('goal-meters'),
   cue: $('cue'), cueKey: $('cue-key'), cueWord: $('cue-word'), toast: $('toast'),
   title: $('title'), start: $('start'), status: $('status'), titleBest: $('title-best'),
   over: $('over'), overScore: $('over-score'), overDetail: $('over-detail'), overBest: $('over-best'), rosette: $('rosette'), restart: $('restart'),
@@ -207,10 +207,10 @@ async function main() {
     }
     if (sim.nextMilestone !== shownGoal) {
       shownGoal = sim.nextMilestone;
-      ui.goalLabel.textContent = `${shownGoal.toLocaleString('it-IT')} m`;
+      ui.goalMeters.textContent = `${shownGoal.toLocaleString('it-IT')} m`;
     }
     const progress = 1 - (sim.nextMilestone - sim.distance) / MILESTONE;
-    ui.goalFill.style.transform = `scaleX(${Math.max(0, Math.min(1, progress))})`;
+    ui.goal.style.setProperty('--p', Math.max(0, Math.min(1, progress)).toFixed(4));
   }
 
   /** While learning, shows the move for the obstacle straight ahead, at the moment it matters. */
