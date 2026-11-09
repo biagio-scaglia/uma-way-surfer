@@ -136,20 +136,20 @@ html, body {
 .cta:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--silk-deep); }
 .cta:focus-visible { outline: 3px solid var(--snow); outline-offset: 4px; }
 
-.final { font: 400 clamp(52px, 10vh, 72px)/1 var(--display); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+.final { font: 400 clamp(52px, 10vh, 66px)/1 var(--display); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
 
-.final-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
-.rosette { position: relative; width: 84px; flex: none; animation: rosette .36s .34s cubic-bezier(.3, 1.6, .5, 1) backwards; }
+.final-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.rosette { position: relative; width: 72px; flex: none; animation: rosette .36s .34s cubic-bezier(.3, 1.6, .5, 1) backwards; }
 .rosette svg { display: block; width: 100%; height: auto; }
 .rosette span {
   position: absolute;
   inset: 0 0 auto;
-  height: 77px;
+  height: 66px;
   display: grid;
   place-items: center;
-  padding: 0 19px;
+  padding: 0 14px;
   color: var(--ink);
-  font: 900 12px/1.05 var(--body);
+  font: 900 11px/1.05 var(--body);
   text-align: center;
 }
 @keyframes rosette { from { transform: scale(0) rotate(-30deg); } }
