@@ -158,7 +158,7 @@ html, body {
 .credits a { color: inherit; }
 a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
 
-@media (max-height: 620px) {
+@media (max-height: 700px) {
   .cloth { padding: 34px 26px 26px; }
   .cloth h1 { font-size: 42px; margin-bottom: 14px; }
   .cloth h1 br:first-of-type { display: none; }
@@ -167,14 +167,32 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
   .cloth .credits { margin-top: 12px; }
 }
 
+/* Phones held sideways: everything has to fit without scrolling. */
+@media (max-height: 430px) {
+  .cloth { width: min(560px, calc(100vw - 32px)); padding: 24px 22px 16px; border-radius: 0 0 40px 12px; }
+  .cloth h1 { font-size: 34px; margin-bottom: 10px; }
+  .cloth h1 br { display: none; }
+  .cloth .intro { display: none; }
+  .legend { margin-bottom: 6px; }
+  .legend svg { max-height: 34px; margin-bottom: 3px; }
+  .legend li { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; font-size: 13px; }
+  .legend svg { flex: 0 0 100%; }
+  .legend kbd { margin-top: 0; }
+  .cloth .hint { font-size: 13px; margin-bottom: 8px; }
+  .cta { font-size: 20px; padding: 8px 14px 10px; }
+  .cloth .credits { margin-top: 8px; font-size: 12px; }
+}
+
 /* Portrait: keep the panel short so the character stays visible underneath. */
 @media (max-aspect-ratio: 3/4) {
+  .cloth .intro { display: none; }
   .cloth { left: 16px; padding: 34px 22px 24px; border-radius: 0 0 48px 12px; outline-width: 6px; }
   .cloth h1 { font-size: clamp(38px, 11.5vw, 56px); margin-bottom: 12px; }
   .cloth h1 br:first-of-type { display: none; }
   .cloth p { margin-bottom: 10px; font-size: 15px; }
   .legend { gap: 10px; }
   .legend li { font-size: 14px; }
+  .legend svg { max-height: 48px; }
   .cloth .hint { font-size: 13px; margin-bottom: 12px; }
   .cta { font-size: 22px; padding: 10px 16px 12px; }
   .cloth .credits { margin: 12px 0 0; font-size: 12px; line-height: 1.35; }
