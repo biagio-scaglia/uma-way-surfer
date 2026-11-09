@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#c8173d">
+  <link rel="icon" href="data:,">
+  <title>Uma Way Surfer</title>
+</head>
+<body>
+  <canvas id="game" aria-label="Pista di gioco"></canvas>
+
+  <div id="hud" hidden>
+    <div id="score" aria-label="Punteggio">0</div>
+    <div class="carrot-count" aria-label="Carote raccolte">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#46a83f" d="M14 8c-1-4 0-6 2-7 0 2 1 3 2 4 2-1 4-1 5 1-2 1-3 2-5 3z"/><path fill="#ff8a1f" d="M15 7c2 1 3 3 2 5-3 5-9 9-15 11 2-6 6-12 11-15 1-1 1-1 2-1z"/></svg>
+      <span id="carrots">0</span>
+    </div>
+  </div>
+
+  <section id="title" class="cloth">
+    <h1>Uma <br>Way <br>Surfer</h1>
+    <p>Corri sul prato dell'ippodromo e raccogli più carote che puoi.</p>
+    <ul class="legend">
+      <li><i class="hurdle"></i>Staccionata: salta<kbd>↑ o spazio</kbd></li>
+      <li><i class="gate"></i>Striscione: scivola<kbd>↓</kbd></li>
+      <li><i class="block"></i>Box: cambia corsia<kbd>← →</kbd></li>
+    </ul>
+    <p id="status" role="status">Sto caricando il personaggio…</p>
+    <button id="start" hidden>Parti</button>
+    <p class="credits">Su telefono scorri nella direzione della mossa. Fangame senza scopo di lucro. Modello: <a href="https://sketchfab.com/3d-models/meisho-doto-uma-musume-91c12bfd72b843929dc88a3857ce3593" target="_blank" rel="noopener">Meisho Doto - Uma Musume</a> di <a href="https://sketchfab.com/ansaldotoys2" target="_blank" rel="noopener">ansaldotoys2</a>, <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY 4.0</a>, con materiali e geometria adattati per il gioco.</p>
+  </section>
+
+  <section id="paused" class="cloth" hidden>
+    <h2>In pausa</h2>
+    <p>La corsa ti aspetta.</p>
+    <button id="resume">Riprendi</button>
+  </section>
+
+  <section id="over" class="cloth" hidden>
+    <h2>Corsa finita</h2>
+    <p id="over-reason"></p>
+    <div class="final" id="over-score">0</div>
+    <p id="over-best"></p>
+    <button id="restart">Corri ancora</button>
+    <p class="credits">Modello: <a href="https://sketchfab.com/3d-models/meisho-doto-uma-musume-91c12bfd72b843929dc88a3857ce3593" target="_blank" rel="noopener">Meisho Doto - Uma Musume</a> di <a href="https://sketchfab.com/ansaldotoys2" target="_blank" rel="noopener">ansaldotoys2</a>, <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY 4.0</a>, con modifiche.</p>
+  </section>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
