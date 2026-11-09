@@ -8,12 +8,23 @@ const SLIDE_TIME = 0.62;
 const BUFFER_TIME = 0.16;
 const SPAWN_AHEAD = 170;
 const BLOCK_LEN = 6;
+const INVINCIBLE_TIME = 1.6;
+const MAX_QUEUED_EVENTS = 64;
+export const LIVES = 3;
+export const MILESTONE = 250;
 
 export type Kind = 'hurdle' | 'gate' | 'block';
 export type Phase = 'ready' | 'running' | 'paused' | 'over';
 
 export interface Obstacle { kind: Kind; lane: number; s: number; len: number }
 export interface Carrot { lane: number; s: number; y: number }
+export type GameEvent =
+  | { type: 'carrot'; lane: number; y: number }
+  | { type: 'hit'; kind: Kind }
+  | { type: 'jump' }
+  | { type: 'slide' }
+  | { type: 'land' }
+  | { type: 'milestone'; meters: number };
 
 const CELL: Record<string, Kind> = { H: 'hurdle', G: 'gate', B: 'block' };
 
@@ -42,6 +53,11 @@ export class Sim {
   hit: Kind | null = null;
   obstacles: Obstacle[] = [];
   carrots: Carrot[] = [];
+  lives = LIVES;
+  invincibleT = 0;
+  nextMilestone = MILESTONE;
+  pace = 1;
+  events: GameEvent[] = [];
 
   private rand: () => number;
   private nextS = 60;
@@ -54,7 +70,7 @@ export class Sim {
     this.fill();
   }
 
-  get speed() { return speedAt(this.distance); }
+  get speed() { return speedAt(this.distance) * this.pace; }
   get sliding() { return this.slideT > 0; }
   get airborne() { return this.y > 0; }
   get score() { return Math.floor(this.distance) + this.carrotsTaken * 10; }
@@ -76,6 +92,10 @@ export class Sim {
     this.x = this.y = this.vy = this.slideT = 0;
     this.carrotsTaken = 0;
     this.hit = null;
+    this.lives = LIVES;
+    this.invincibleT = 0;
+    this.nextMilestone = MILESTONE;
+    this.events = [];
     this.obstacles = [];
     this.carrots = [];
     this.nextS = 60;
@@ -101,7 +121,12 @@ export class Sim {
       this.buffer('slide', 0.4);
     } else {
       this.slideT = SLIDE_TIME;
+      this.emit({ type: 'slide' });
     }
+  }
+
+  private emit(event: GameEvent) {
+    if (this.events.length < MAX_QUEUED_EVENTS) this.events.push(event);
   }
 
   private buffer(action: 'jump' | 'slide', time: number) {
@@ -113,6 +138,7 @@ export class Sim {
     this.slideT = 0;
     this.vy = JUMP_V;
     this.y = 1e-4;
+    this.emit({ type: 'jump' });
   }
 
   step(dt: number) {
@@ -122,14 +148,23 @@ export class Sim {
     this.x = LANE_X[this.lane] + (this.x - LANE_X[this.lane]) * Math.exp(-dt * 18);
     this.slideT = Math.max(0, this.slideT - dt);
     this.bufferT -= dt;
+    this.invincibleT = Math.max(0, this.invincibleT - dt);
+    if (this.distance >= this.nextMilestone) {
+      this.emit({ type: 'milestone', meters: this.nextMilestone });
+      this.nextMilestone += MILESTONE;
+    }
 
     if (this.airborne) {
       this.vy -= GRAVITY * dt;
       this.y += this.vy * dt;
       if (this.y <= 0) {
         this.y = this.vy = 0;
+        this.emit({ type: 'land' });
         if (this.bufferT > 0 && this.buffered === 'jump') this.doJump();
-        if (this.bufferT > 0 && this.buffered === 'slide') this.slideT = SLIDE_TIME;
+        if (this.bufferT > 0 && this.buffered === 'slide') {
+          this.slideT = SLIDE_TIME;
+          this.emit({ type: 'slide' });
+        }
         this.buffered = null;
       }
     }
@@ -149,18 +184,23 @@ export class Sim {
       if (near && c.y > this.y - 0.4 && c.y < top + 0.4) {
         this.carrots.splice(i, 1);
         this.carrotsTaken++;
+        this.emit({ type: 'carrot', lane: c.lane, y: c.y });
       }
     }
   }
 
   private checkHits() {
+    if (this.invincibleT > 0) return;
     for (const o of this.obstacles) {
       if (this.distance + 0.35 < o.s || this.distance - 0.35 > o.s + o.len) continue;
       if (Math.abs(LANE_X[o.lane] - this.x) >= 1) continue;
       const clear = o.kind === 'hurdle' ? this.y >= 0.85 : o.kind === 'gate' ? this.sliding : false;
       if (!clear) {
         this.hit = o.kind;
-        this.phase = 'over';
+        this.lives--;
+        this.emit({ type: 'hit', kind: o.kind });
+        if (this.lives <= 0) this.phase = 'over';
+        else this.invincibleT = INVINCIBLE_TIME;
         return;
       }
     }
