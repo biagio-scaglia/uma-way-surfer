@@ -82,12 +82,18 @@ async function main() {
   ui.resume.addEventListener('click', () => sim.togglePause());
   ui.pause.addEventListener('click', () => sim.togglePause());
 
+  let titleBottom = 0;
+  function measureTitle() {
+    if (!ui.title.hidden) titleBottom = ui.title.offsetTop + ui.title.offsetHeight;
+  }
+
   function resize() {
     const w = innerWidth, h = innerHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.fov = w < h ? 76 : 60;
     camera.updateProjectionMatrix();
+    measureTitle();
   }
   addEventListener('resize', resize);
   resize();
@@ -151,14 +157,17 @@ async function main() {
     const radius = THREE.MathUtils.lerp(5.4, 3.3, intro);
     const height = THREE.MathUtils.lerp(2.9, 1.45, intro);
     const sideOffset = portrait ? 0 : intro - overShift * 1.8;
-    const liftView = portrait ? intro * 0.95 : 0;
+    // Portrait: slide the picture down so the character sits below the panel.
+    const viewShift = portrait ? intro * titleBottom / 2 : 0;
+    if (viewShift > 0.5) camera.setViewOffset(innerWidth, innerHeight, 0, -viewShift, innerWidth, innerHeight);
+    else if (camera.view?.enabled) camera.clearViewOffset();
     const quake = shake * shake * 0.25;
     camera.position.set(
       sim.x * 0.7 + Math.sin(angle) * radius + Math.sin(time * 61) * quake,
       height + sim.y * 0.35 + Math.sin(time * 73) * quake,
       Math.cos(angle) * radius,
     );
-    look.set(sim.x * 0.8 + sideOffset, 1 + sim.y * 0.3 + liftView, THREE.MathUtils.lerp(-5, 0, intro));
+    look.set(sim.x * 0.8 + sideOffset, 1 + sim.y * 0.3, THREE.MathUtils.lerp(-5, 0, intro));
     camera.lookAt(look);
   }
 
@@ -186,7 +195,8 @@ async function main() {
 
   ui.status.hidden = true;
   ui.start.hidden = false;
-  ui.start.focus();
+  measureTitle();
+  ui.start.focus({ preventScroll: true });
   requestAnimationFrame(frame);
 }
 
