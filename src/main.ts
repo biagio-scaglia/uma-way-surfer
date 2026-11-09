@@ -118,7 +118,7 @@ async function main() {
     ui.title.hidden = sim.phase !== 'ready';
     ui.over.hidden = sim.phase !== 'over';
     ui.paused.hidden = sim.phase !== 'paused';
-    ui.hud.hidden = sim.phase === 'ready' || sim.phase === 'over';
+    ui.hud.hidden = sim.phase !== 'running';
     if (sim.phase === 'over' && previous === 'running') {
       shake = 1;
       const isRecord = sim.score > best;
