@@ -4,6 +4,8 @@ Fangame non commerciale: un endless runner 3D a tre corsie, ambientato in un ipp
 
 **Gioca qui:** https://biagio-scaglia.github.io/uma-way-surfer/
 
+Dopo la prima visita il gioco resta salvato nel browser: le volte successive parte subito, anche senza connessione. Se ti è piaciuto, lascia una stella al repository ⭐
+
 Scegli chi corre, Tokai Teio o Meisho Doto, salta le staccionate, scivola sotto gli striscioni, evita i box di partenza e raccogli carote. Ogni 250 metri c'è un traguardo. Intanto passa la giornata: verso i 400 metri il sole tramonta in fondo alla pista, poi arrivano luna, stelle e lampioni accesi, e a 1000 metri torna l'alba.
 
 ## Comandi
@@ -34,6 +36,8 @@ Serve Node.js. Il gioco va aperto tramite il server di sviluppo: un doppio clic 
 npm install
 npm run dev
 ```
+
+La cache è gestita da `public/sw.js`, attivo solo nella versione pubblicata.
 
 `npm run build` crea la versione pubblicabile in `dist/`. Ogni push su `main` la pubblica su GitHub Pages tramite GitHub Actions, se in **Settings → Pages** la sorgente è impostata su **GitHub Actions**.
 
