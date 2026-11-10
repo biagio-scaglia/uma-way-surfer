@@ -32,6 +32,16 @@ function sameGeometry(a: THREE.BufferGeometry, b: THREE.BufferGeometry) {
     && same(a.index!.array, b.index!.array);
 }
 
+// A hard-edged rim of warm light, as in cel animation, lifts the character off the green turf.
+function addRim(shader: { fragmentShader: string }) {
+  shader.fragmentShader = shader.fragmentShader.replace(
+    '#include <opaque_fragment>',
+    `float rim = 1.0 - saturate(dot(normalize(vViewPosition), normal));
+    outgoingLight += vec3(1.0, 0.93, 0.82) * smoothstep(0.55, 0.63, rim) * 0.9 * mix(vec3(1.0), diffuseColor.rgb, 0.5);
+    #include <opaque_fragment>`,
+  );
+}
+
 function addOutline(mesh: THREE.SkinnedMesh, material: THREE.Material) {
   const outline = new THREE.SkinnedMesh(mesh.geometry, material);
   outline.bind(mesh.skeleton, mesh.bindMatrix);
@@ -82,7 +92,7 @@ export async function loadCharacter(url: string, onProgress?: (ratio: number) =>
       map: source.map,
       side: THREE.DoubleSide,
       gradientMap: toonGradient,
-    }));
+    }), addRim);
     mesh.frustumCulled = false;
     mesh.bind(skeleton, mesh.bindMatrix);
 
