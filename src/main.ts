@@ -3,10 +3,8 @@ import '@fontsource/zen-maru-gothic/500.css';
 import '@fontsource/zen-maru-gothic/900.css';
 import './style.css';
 import * as THREE from 'three';
-import modelUrl from '../models/tokai_teio_-_uma_musume.glb?url';
-import { Animator } from './animation';
 import { Sfx } from './audio';
-import { loadCharacter } from './character';
+import { CAST, isCastId, portrait, summon, type CastId, type Runner } from './cast';
 import { DayNight, type TimeOfDay } from './daynight';
 import { Effects } from './effects';
 import { bindInput } from './input';
@@ -17,6 +15,8 @@ import { World } from './world';
 const STEP = 1 / 120;
 const BEST_KEY = 'uma-way-surfer-best';
 const SETTINGS_KEY = 'uma-way-surfer-settings';
+const CAST_KEY = 'uma-way-surfer-character';
+const SPARKLE = [0xffc53d, 0xffffff, 0xf7a8c0];
 const CALM_PACE = 0.8;
 const RESTART_LOCK_MS = 500;
 const COUNT_UP_MS = 650;
@@ -45,6 +45,16 @@ const ui = {
   pauseScore: $('pause-score'), pauseMeters: $('pause-meters'), pauseCarrots: $('pause-carrots'), toastMeters: $('toast-meters'),
   settings: $('settings'), sound: $('toggle-sound'), calm: $('toggle-calm'),
 };
+
+function readCast(): CastId {
+  try {
+    const saved = localStorage.getItem(CAST_KEY);
+    return isCastId(saved) ? saved : 'teio';
+  } catch { return 'teio'; }
+}
+function saveCast(id: CastId) {
+  try { localStorage.setItem(CAST_KEY, id); } catch { /* the choice is optional */ }
+}
 
 function readBest() {
   try { return Number(localStorage.getItem(BEST_KEY)) || 0; } catch { return 0; }
@@ -93,13 +103,18 @@ async function main() {
   const sfx = new Sfx();
   const effects = new Effects(scene);
   const loadFill = $('load-fill');
-  const [character, props] = await Promise.all([
-    loadCharacter(modelUrl, ratio => { loadFill.style.transform = `scaleX(${ratio})`; }),
+  let chosen = readCast();
+  const [first, props] = await Promise.all([
+    summon(chosen, ratio => { loadFill.style.transform = `scaleX(${ratio})`; }).catch(() => {
+      // A broken saved choice should not lock the player out: fall back to Teio.
+      chosen = 'teio';
+      return summon(chosen);
+    }),
     loadProps(),
   ]);
   const world = new World(scene, props);
-  scene.add(character.root);
-  const animator = new Animator(character);
+  let runner: Runner = first;
+  scene.add(runner.character.root);
 
   const settings = readSettings();
   function applySettings() {
@@ -148,6 +163,51 @@ async function main() {
   }
   addEventListener('resize', resize);
   resize();
+
+  const pickers = [...document.querySelectorAll<HTMLButtonElement>('.pick')];
+
+  function showCast() {
+    const { title, page } = CAST[runner.id];
+    for (const link of document.querySelectorAll<HTMLAnchorElement>('.model-link')) {
+      link.href = page;
+      link.textContent = title;
+    }
+    for (const button of pickers) {
+      const id = button.dataset.cast as CastId;
+      button.setAttribute('aria-checked', String(id === chosen));
+      button.classList.toggle('waiting', id === chosen && id !== runner.id);
+    }
+  }
+
+  function setPortrait(id: CastId) {
+    summon(id).then(r => {
+      const url = portrait(r, sim);
+      for (const img of document.querySelectorAll<HTMLImageElement>(`.pick[data-cast='${id}'] img`)) {
+        img.src = url;
+        img.hidden = false;
+      }
+    }).catch(() => { /* the card keeps its placeholder */ });
+  }
+
+  /** Swaps the runner on the start or results screen; the 3D model itself is the preview. */
+  async function choose(id: CastId) {
+    if (sim.phase !== 'ready' && sim.phase !== 'over') return;
+    if (id === chosen && id === runner.id) return;
+    chosen = id;
+    saveCast(id);
+    showCast();
+    let next: Runner;
+    try { next = await summon(id); } catch { chosen = runner.id; showCast(); return; }
+    if (chosen !== id || (sim.phase !== 'ready' && sim.phase !== 'over')) return;
+    scene.remove(runner.character.root);
+    runner = next;
+    scene.add(runner.character.root);
+    showCast();
+    sfx.carrot();
+    effects.burst(sim.x, 1.2, 0, 28, SPARKLE, { speed: 4, size: 0.06, life: 0.9, scroll: 0 });
+  }
+  for (const button of pickers) button.addEventListener('click', () => choose(button.dataset.cast as CastId));
+  showCast();
 
   ui.titleBest.hidden = best === 0;
   ui.titleBestValue.textContent = `Record: ${best.toLocaleString('it-IT')}`;
@@ -343,8 +403,8 @@ async function main() {
       accumulator -= STEP;
     }
 
-    animator.update(dt, sim);
-    character.root.visible = settings.calm || sim.invincibleT === 0 || Math.floor(time * 10) % 2 === 0;
+    runner.animator.update(dt, sim);
+    runner.character.root.visible = settings.calm || sim.invincibleT === 0 || Math.floor(time * 10) % 2 === 0;
     world.sync(sim, time);
     drainEvents();
     effects.update(dt, sim.phase === 'running' ? sim.speed : 0, time);
@@ -360,6 +420,10 @@ async function main() {
   }
 
   if (import.meta.env.DEV) Object.assign(window, { __game: { sim, camera, scene } });
+
+  setPortrait(runner.id);
+  // The other runner downloads quietly once the game is ready, so switching is instant.
+  setTimeout(() => { for (const id of Object.keys(CAST) as CastId[]) if (id !== runner.id) setPortrait(id); }, 1200);
 
   ui.status.hidden = true;
   ui.start.hidden = false;
