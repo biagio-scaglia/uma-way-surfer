@@ -9,6 +9,7 @@ import { Sfx } from './audio';
 import { loadCharacter } from './character';
 import { Effects } from './effects';
 import { bindInput } from './input';
+import { loadProps } from './props';
 import { LANE_X, MILESTONE, Sim, type Kind } from './sim';
 import { World } from './world';
 
@@ -110,10 +111,13 @@ async function main() {
 
   const sim = new Sim();
   const sfx = new Sfx();
-  const world = new World(scene);
   const effects = new Effects(scene);
   const loadFill = $('load-fill');
-  const character = await loadCharacter(modelUrl, ratio => { loadFill.style.transform = `scaleX(${ratio})`; });
+  const [character, props] = await Promise.all([
+    loadCharacter(modelUrl, ratio => { loadFill.style.transform = `scaleX(${ratio})`; }),
+    loadProps(),
+  ]);
+  const world = new World(scene, props);
   scene.add(character.root);
   const animator = new Animator(character);
 
