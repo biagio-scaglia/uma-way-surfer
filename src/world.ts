@@ -23,10 +23,13 @@ const COLORS = {
   gate: 0x1f62e0, gold: 0xffc53d,
   block: 0xffc21f, ink: 0x1c3250, silk: 0xc8173d,
   carrot: 0xff8412, carrotDark: 0xe2670a, leaf: 0x3fb13a, leafLight: 0x62c956,
+  skin: 0xf6dcc8, skinWarm: 0xd9a988,
   lampPost: 0x4a5670, lampOff: 0xeae6da, lampOn: 0xfff1b0, lampGlow: 0xffd98a,
   petalPink: 0xf7a8c0, petalYellow: 0xffdc73, petalLilac: 0xc9b3f2, tuft: 0x8cc47b, stone: 0xd8d2c4,
   hill: 0xbfdccb, hillFar: 0xd2e6dc, cloud: 0xffffff,
 };
+
+const CROWD = [0xe8a0a8, 0xa9c7e8, 0xf3d98f, 0xb9dbb0, 0xd9c2ec, 0xf6f1e6];
 
 type G = THREE.BufferGeometry;
 
@@ -145,7 +148,37 @@ function grandstand(parts: G[], z: number) {
       parts.push(box(2, h, moduleLen, -16 - step * 2, h / 2, mz, step % 2 ? COLORS.standBlue : COLORS.stand));
     }
     parts.push(box(15, 0.35, moduleLen + 1.5, -22, 11.6, mz, COLORS.roof));
-    for (let p = -1; p <= 1; p++) parts.push(post(0.16, 11.6, -15.5, 5.8, mz + p * 10.5, COLORS.stand));
+    parts.push(box(0.2, 0.5, moduleLen + 1.5, -14.55, 11.45, mz, COLORS.silk));
+    // A striped valance along the front of the roof.
+    for (let v = 0; v < moduleLen / 0.8; v++) {
+      const vz = mz - moduleLen / 2 + 0.4 + v * 0.8;
+      parts.push(chevron(0.36, 0, 0, 0, v % 2 ? COLORS.rail : COLORS.silk).rotateY(Math.PI / 2).translate(-14.5, 11.02, vz));
+    }
+    for (let p = -1; p <= 1; p++) {
+      const pz = mz + p * 10.5;
+      parts.push(post(0.16, 11.6, -15.5, 5.8, pz, COLORS.stand));
+      parts.push(post(0.04, 1.8, -15.5, 12.7, pz, COLORS.rail));
+      parts.push(paint(new THREE.ConeGeometry(0.3, 1, 3).rotateZ(-Math.PI / 2).scale(1, 0.7, 0.15)
+        .translate(-15, 13.2, pz), p ? COLORS.flagA : COLORS.flagB));
+    }
+    crowd(parts, mz, moduleLen);
+  }
+}
+
+/** A quiet, pastel crowd on the terraces: just a body and a head each. */
+function crowd(parts: G[], mz: number, moduleLen: number) {
+  const rand = seeded(Math.round(mz * 7) | 0);
+  for (let step = 0; step < 6; step++) {
+    const top = 1.2 + step * 1.3;
+    const x = -16 - step * 2 + 0.2;
+    for (let s = 0.7; s < moduleLen - 0.5; s += 0.9 + rand() * 0.5) {
+      if (rand() < 0.3) continue;
+      const pz = mz - moduleLen / 2 + s;
+      const height = 0.75 + rand() * 0.2;
+      const shirt = CROWD[Math.floor(rand() * CROWD.length)];
+      parts.push(paint(new THREE.CylinderGeometry(0.15, 0.22, height, 6).translate(x, top + height / 2, pz), shirt));
+      parts.push(blob(0.17, x, top + height + 0.15, pz, rand() < 0.5 ? COLORS.skin : COLORS.skinWarm, 0));
+    }
   }
 }
 
