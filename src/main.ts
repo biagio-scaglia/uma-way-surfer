@@ -39,9 +39,10 @@ const ui = {
   score: $('score'), carrots: $('carrots'), hud: $('hud'), lives: $('lives'),
   goal: $('goal'), goalMeters: $('goal-meters'), daytime: $('daytime'),
   cue: $('cue'), cueKey: $('cue-key'), cueWord: $('cue-word'), toast: $('toast'),
-  title: $('title'), start: $('start'), status: $('status'), titleBest: $('title-best'),
+  title: $('title'), start: $('start'), status: $('status'), titleBest: $('title-best'), titleBestValue: $('title-best-value'),
   over: $('over'), overScore: $('over-score'), overMeters: $('over-meters'), overCarrots: $('over-carrots'), overCarrotWord: $('over-carrot-word'), overBest: $('over-best'), rosette: $('rosette'), restart: $('restart'),
   paused: $('paused'), resume: $('resume'), pause: $('pause'),
+  pauseScore: $('pause-score'), pauseMeters: $('pause-meters'), pauseCarrots: $('pause-carrots'), toastMeters: $('toast-meters'),
   settings: $('settings'), sound: $('toggle-sound'), calm: $('toggle-calm'),
 };
 
@@ -149,7 +150,7 @@ async function main() {
   resize();
 
   ui.titleBest.hidden = best === 0;
-  ui.titleBest.textContent = `Il tuo record: ${best.toLocaleString('it-IT')}`;
+  ui.titleBestValue.textContent = `Record: ${best.toLocaleString('it-IT')}`;
 
   let intro = 1;
   let overShift = 0;
@@ -216,7 +217,12 @@ async function main() {
       if (isRecord) effects.burst(sim.x, 1.6, -1, 50, CONFETTI, { speed: 6, size: 0.065, life: 1.3, scroll: 0 });
       ui.restart.focus({ preventScroll: true });
     }
-    if (sim.phase === 'paused') ui.resume.focus({ preventScroll: true });
+    if (sim.phase === 'paused') {
+      ui.pauseScore.textContent = sim.score.toLocaleString('it-IT');
+      ui.pauseMeters.textContent = Math.floor(sim.distance).toLocaleString('it-IT');
+      ui.pauseCarrots.textContent = String(sim.carrotsTaken);
+      ui.resume.focus({ preventScroll: true });
+    }
   }
 
   function syncHud() {
@@ -294,7 +300,7 @@ async function main() {
           break;
         case 'milestone':
           sfx.milestone();
-          ui.toast.textContent = `${event.meters.toLocaleString('it-IT')} m!`;
+          ui.toastMeters.textContent = `${event.meters.toLocaleString('it-IT')} m!`;
           retrigger(ui.toast, 'show');
           effects.burst(sim.x, 2, -3, 46, CONFETTI, { speed: 6, size: 0.065, life: 1.1, scroll: 0.5 });
           break;
