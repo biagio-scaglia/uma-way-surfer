@@ -13,7 +13,7 @@ const CARROT_SCALE = 0.85;
 
 // The background stays pale and quiet; only what the player must react to is saturated.
 const COLORS = {
-  turfA: 0x5cb86b, turfB: 0x54ae63, turfShadow: 0x3f8f50, verge: 0xaed89a, chalk: 0xfbf8ef, rail: 0xfaf7ee,
+  turfA: 0x5fbb6d, turfB: 0x52aa61, turfShadow: 0x3f8f50, verge: 0xaed89a, chalk: 0xfbf8ef, rail: 0xfaf7ee,
   path: 0xe6d5ae, hedge: 0x7cb878, hedgeLight: 0x93c98c,
   trunk: 0x927268, sakura: 0xfbd0dc, sakuraPale: 0xfde4eb,
   stand: 0xf3eee3, standBlue: 0xcfdde7, roof: 0xf8d8d2, flagA: 0xa9c7e8, flagB: 0xf2b8b2,
@@ -24,6 +24,8 @@ const COLORS = {
   carrot: 0xff8412, carrotDark: 0xe2670a, leaf: 0x3fb13a, leafLight: 0x62c956,
   hill: 0xbfdccb, hillFar: 0xd2e6dc, cloud: 0xffffff,
 };
+
+const FLOWERS = [0xffffff, 0xf7a8c0, 0xffd65a, 0xd9b8f0];
 
 type G = THREE.BufferGeometry;
 
@@ -55,8 +57,13 @@ const soft = (w: number, h: number, d: number, radius: number, x: number, y: num
 const post = (radius: number, h: number, x: number, y: number, z: number, c: number) =>
   paint(new THREE.CylinderGeometry(radius, radius, h, 8).translate(x, y, z), c);
 
-const blob = (r: number, x: number, y: number, z: number, c: number) =>
-  paint(new THREE.IcosahedronGeometry(r, 1).translate(x, y, z), c);
+// Radial normals make foliage read as soft round puffs instead of faceted rocks.
+function blob(r: number, x: number, y: number, z: number, c: number, detail = 1) {
+  const g = new THREE.IcosahedronGeometry(r, detail);
+  g.setAttribute('normal', g.attributes.position.clone());
+  g.normalizeNormals();
+  return paint(g.translate(x, y, z), c);
+}
 
 /** Triangular prism with its point facing down. */
 const chevron = (r: number, x: number, y: number, z: number, c: number) =>
@@ -91,8 +98,14 @@ function fences(parts: G[], z: number) {
       const x = side * 3.6;
       parts.push(post(0.06, 1.1, x, 0.55, tz, COLORS.rail));
       parts.push(paint(new THREE.CylinderGeometry(0.06, 0.06, 4, 6).rotateX(Math.PI / 2).translate(x, 1.08, tz - 2), COLORS.rail));
-      parts.push(blob(0.85, side * 5, 0.42, tz - 1, COLORS.hedge));
-      parts.push(blob(0.62, side * 4.9, 0.72, tz - 2.6, COLORS.hedgeLight));
+      parts.push(blob(0.85, side * 5, 0.42, tz - 1, COLORS.hedge, 2));
+      parts.push(blob(0.62, side * 4.9, 0.72, tz - 2.6, COLORS.hedgeLight, 2));
+      // A few flowers peeking out of the hedge, pale enough to stay in the background.
+      for (let f = 0; f < 3; f++) {
+        const fz = tz - 0.6 - f * 1.2;
+        const fy = 0.55 + ((i + f) % 3) * 0.18;
+        parts.push(blob(0.065, side * (4.25 + (f % 2) * 0.15), fy, fz, FLOWERS[(i + f + (side > 0 ? 1 : 0)) % FLOWERS.length]));
+      }
       if (i % 6 === 0) {
         parts.push(post(0.035, 2.2, x, 2.1, tz, COLORS.rail));
         parts.push(paint(new THREE.ConeGeometry(0.26, 0.8, 3).rotateZ(-side * Math.PI / 2).scale(1, 0.7, 0.15)
