@@ -4,7 +4,7 @@ Fangame non commerciale: un endless runner 3D a tre corsie, ambientato in un ipp
 
 **Gioca qui:** https://biagio-scaglia.github.io/uma-way-surfer/
 
-Corri con Tokai Teio, salta le staccionate, scivola sotto gli striscioni, evita i box di partenza e raccogli carote. Ogni 250 metri c'è un traguardo.
+Corri con Tokai Teio, salta le staccionate, scivola sotto gli striscioni, evita i box di partenza e raccogli carote. Ogni 250 metri c'è un traguardo. Intanto passa la giornata: verso i 400 metri il sole tramonta in fondo alla pista, poi arrivano luna, stelle e lampioni accesi, e a 1000 metri torna l'alba.
 
 ## Comandi
 
