@@ -446,6 +446,13 @@ async function main() {
   requestAnimationFrame(frame);
 }
 
+// After the first visit the game loads from the browser's cache (see public/sw.js).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => { /* the game still works without it */ });
+  });
+}
+
 main().catch(error => {
   console.error(error);
   ui.status.textContent = 'Il gioco non si è avviato. Verifica che il browser supporti WebGL, poi ricarica la pagina.';
