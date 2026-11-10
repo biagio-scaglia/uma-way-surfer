@@ -23,6 +23,8 @@ const COLORS = {
   gate: 0x1f62e0, gold: 0xffc53d,
   block: 0xffc21f, ink: 0x1c3250, silk: 0xc8173d,
   carrot: 0xff8412, carrotDark: 0xe2670a, leaf: 0x3fb13a, leafLight: 0x62c956,
+  tentA: 0xf2b8b2, tentB: 0xfaf7ee, wood: 0xd9b08c, woodDark: 0xb98d6b, terracotta: 0xe3a07f,
+  soil: 0xc19a74, soilDark: 0xa27d5a, rootMuted: 0xe9a87a, cap: 0xf0c9a0,
   skin: 0xf6dcc8, skinWarm: 0xd9a988,
   lampPost: 0x4a5670, lampOff: 0xeae6da, lampOn: 0xfff1b0, lampGlow: 0xffd98a,
   petalPink: 0xf7a8c0, petalYellow: 0xffdc73, petalLilac: 0xc9b3f2, tuft: 0x8cc47b, stone: 0xd8d2c4,
@@ -151,7 +153,7 @@ function grandstand(parts: G[], z: number) {
     parts.push(box(0.2, 0.5, moduleLen + 1.5, -14.55, 11.45, mz, COLORS.silk));
     // Striped awning under the roof; its normals face up so it stays bright from below.
     for (let st = 0; st < 6; st++) {
-      const ceiling = box(2.5, 0.04, moduleLen + 1.4, -15.75 - st * 2.5, 11.4, mz, st % 2 ? COLORS.roof : COLORS.rail);
+      const ceiling = box(2.5, 0.04, moduleLen + 1.4, -15.75 - st * 2.5, 11.3, mz, st % 2 ? COLORS.roof : COLORS.rail);
       const normal = ceiling.attributes.normal;
       for (let i = 0; i < normal.count; i++) normal.setXYZ(i, 0, 1, 0);
       parts.push(ceiling);
@@ -235,6 +237,48 @@ function meadow(parts: G[], props: Props, z: number) {
   }
 }
 
+/** Food stalls and potted flowers in front of each grandstand. */
+function paddock(parts: G[], props: Props, z: number) {
+  const tent = { colorRed: COLORS.tentA, colorRedDark: COLORS.tentB, wood: COLORS.wood, other: COLORS.wood };
+  const pot = { wood: COLORS.terracotta, woodBarkDark: COLORS.soilDark, _defaultMat: COLORS.petalPink, other: COLORS.terracotta };
+  for (let m = 0; m < LOOP / 24; m += 2) {
+    const mz = z - m * 24 - 12;
+    for (const dz of [-7, 0, 7]) place(parts, props, 'tent_smallOpen', tent, 4.4, -10.8, mz + dz, Math.PI / 2);
+    for (let i = 0; i < 6; i++) place(parts, props, 'pot_small', pot, 2.2, -14.3, mz - 10 + i * 4);
+  }
+}
+
+/** A carrot patch beside the track, in muted colours so it never reads as a pickup. */
+function garden(parts: G[], props: Props, z: number) {
+  const soil = { dirt: COLORS.soil, dirtDark: COLORS.soilDark, other: COLORS.soil };
+  const carrot = { grass: COLORS.leafLight, leafsFall: COLORS.rootMuted, other: COLORS.leafLight };
+  for (const start of [z - 28, z - 76]) {
+    for (let row = 0; row < 3; row++) {
+      const x = 7 + row * 1.5;
+      for (let seg = 0; seg < 4; seg++) {
+        const sz = start - seg * 2.4;
+        place(parts, props, 'crops_dirtRow', soil, 2.4, x, sz, Math.PI / 2);
+        for (const off of [-0.6, 0.6]) place(parts, props, 'crop_carrot', carrot, 1.5, x, sz + off, row + seg);
+      }
+    }
+  }
+}
+
+/** Stumps, log piles and mushrooms in the shade of the cherry trees. */
+function woodland(parts: G[], props: Props, z: number) {
+  const rand = seeded(37);
+  const bark = { woodBark: COLORS.trunk, woodInner: COLORS.wood, other: COLORS.trunk };
+  const mushroom = { _defaultMat: COLORS.tentB, colorTan: COLORS.cap, other: COLORS.cap };
+  for (let i = 0; i < 10; i++) {
+    const x = 11 + rand() * 24;
+    const tz = z - rand() * LOOP;
+    const pick = rand();
+    if (pick < 0.35) place(parts, props, 'stump_old', bark, 3, x, tz, rand() * 6);
+    else if (pick < 0.6) place(parts, props, 'log_stack', bark, 3.2, x, tz, rand() * 6);
+    else place(parts, props, 'mushroom_tanGroup', mushroom, 3, x, tz, rand() * 6);
+  }
+}
+
 function buildScenery(material: THREE.Material, props: Props) {
   const parts: G[] = [];
   for (let k = -2; k <= 3; k++) {
@@ -244,6 +288,9 @@ function buildScenery(material: THREE.Material, props: Props) {
     grandstand(parts, z);
     trees(parts, props, z);
     meadow(parts, props, z);
+    paddock(parts, props, z);
+    garden(parts, props, z);
+    woodland(parts, props, z);
   }
   const mesh = new THREE.Mesh(mergeGeometries(parts), material);
   mesh.frustumCulled = false;
