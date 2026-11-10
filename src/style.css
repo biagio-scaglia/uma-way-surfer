@@ -526,6 +526,9 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
 .pill:focus-visible { outline: 3px solid var(--snow); outline-offset: 2px; }
 #toggle-sound[aria-pressed='false'] { opacity: .75; }
 #toggle-calm { color: var(--turf); }
+#star { text-decoration: none; }
+#star svg { transition: transform .2s; }
+@media (hover: hover) { #star:hover svg { transform: rotate(-14deg) scale(1.15); } }
 #toggle-calm[aria-pressed='true'] { background: var(--turf); color: var(--snow); }
 #toggle-calm[aria-pressed='true'] svg { --leaf-vein: var(--turf); }
 
