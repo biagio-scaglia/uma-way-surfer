@@ -13,6 +13,8 @@ export function bindInput(sim: Sim, onStart: () => void) {
       Escape: () => sim.togglePause(), KeyP: () => sim.togglePause(),
     };
     if (e.code === 'Space' || e.code === 'Enter') {
+      // On a focused button or link, let the browser press that control instead.
+      if (sim.phase !== 'running' && (e.target as HTMLElement).closest?.('button, a')) return;
       e.preventDefault();
       if (sim.phase === 'running') { if (e.code === 'Space') sim.jump(); }
       else if (sim.phase === 'paused') sim.togglePause();
