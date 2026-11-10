@@ -254,6 +254,19 @@ html, body {
   opacity: 0;
   pointer-events: none;
 }
+.toast-kicker {
+  display: table;
+  margin: 0 auto 8px;
+  padding: 6px 16px 7px;
+  border-radius: 99px;
+  background: var(--silk);
+  color: var(--snow);
+  font-size: clamp(18px, 3vw, 24px);
+  letter-spacing: .04em;
+  -webkit-text-stroke: 0;
+  box-shadow: 0 4px 0 var(--silk-deep), 0 0 0 3px var(--gold);
+  transform: rotate(-3deg);
+}
 #toast.show { animation: toast 1.1s ease-out; }
 @keyframes toast {
   0% { opacity: 0; transform: scale(.5); }
@@ -405,11 +418,26 @@ html, body {
 }
 @keyframes rosette { from { transform: scale(0) rotate(-30deg); } }
 
-.stats { list-style: none; display: flex; gap: 8px; margin: 0 0 14px; padding: 0; }
+.stats { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; padding: 0; }
 .stats li { display: flex; align-items: center; gap: 6px; padding: 5px 12px 6px 8px; border-radius: 10px; background: var(--silk-deep); font-size: 15px; }
 .stats svg { width: 20px; height: 20px; color: var(--gold); }
 .stats b { font: 400 18px/1 var(--display); }
 
+/* The best score so far, worn like a gold rosette ribbon. */
+.cloth .record-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: -6px 0 16px;
+  padding: 5px 16px 6px 8px;
+  border-radius: 99px;
+  background: var(--gold);
+  color: var(--ink);
+  font: 400 19px/1 var(--display);
+  word-spacing: .2em;
+  box-shadow: 0 4px 0 var(--gold-deep);
+}
+.record-chip svg { width: 26px; height: 26px; padding: 2px; border-radius: 50%; background: var(--snow); }
 .cloth .credits { margin: 20px 0 0; font-size: 13px; line-height: 1.45; opacity: .95; }
 .credits a { color: inherit; }
 a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
@@ -483,6 +511,11 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
   .cloth .credits { margin: 12px 0 0; font-size: 12px; line-height: 1.35; }
   #settings { flex-direction: column; align-items: flex-end; }
   #goal { width: 30vw; }
+  .stats { gap: 6px; }
+  .stats li { padding: 4px 9px 5px 6px; font-size: 14px; }
+  .stats b { font-size: 16px; }
+  /* Hidden visually only: screen readers still announce the unit. */
+  #paused .unit { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   #daytime { width: 28px; height: 28px; margin-top: -4px; }
   #goal-label #daytime svg { width: 20px; height: 20px; }
 }
