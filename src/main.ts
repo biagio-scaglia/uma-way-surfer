@@ -121,6 +121,7 @@ async function main() {
   function applySettings() {
     sfx.muted = !settings.sound;
     effects.calm = settings.calm;
+    document.documentElement.classList.toggle('calm', settings.calm);
     ui.sound.setAttribute('aria-pressed', String(settings.sound));
     ui.calm.setAttribute('aria-pressed', String(settings.calm));
     saveSettings(settings);
