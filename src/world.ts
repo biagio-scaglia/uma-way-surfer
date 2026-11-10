@@ -149,6 +149,13 @@ function grandstand(parts: G[], z: number) {
     }
     parts.push(box(15, 0.35, moduleLen + 1.5, -22, 11.6, mz, COLORS.roof));
     parts.push(box(0.2, 0.5, moduleLen + 1.5, -14.55, 11.45, mz, COLORS.silk));
+    // Striped awning under the roof; its normals face up so it stays bright from below.
+    for (let st = 0; st < 6; st++) {
+      const ceiling = box(2.5, 0.04, moduleLen + 1.4, -15.75 - st * 2.5, 11.4, mz, st % 2 ? COLORS.roof : COLORS.rail);
+      const normal = ceiling.attributes.normal;
+      for (let i = 0; i < normal.count; i++) normal.setXYZ(i, 0, 1, 0);
+      parts.push(ceiling);
+    }
     // A striped valance along the front of the roof.
     for (let v = 0; v < moduleLen / 0.8; v++) {
       const vz = mz - moduleLen / 2 + 0.4 + v * 0.8;
