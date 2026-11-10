@@ -7,6 +7,7 @@ import modelUrl from '../models/tokai_teio_-_uma_musume.glb?url';
 import { Animator } from './animation';
 import { Sfx } from './audio';
 import { loadCharacter } from './character';
+import { DayNight, type TimeOfDay } from './daynight';
 import { Effects } from './effects';
 import { bindInput } from './input';
 import { loadProps } from './props';
@@ -19,7 +20,8 @@ const SETTINGS_KEY = 'uma-way-surfer-settings';
 const CALM_PACE = 0.8;
 const RESTART_LOCK_MS = 500;
 const COUNT_UP_MS = 650;
-const SKY_ASPECT = 2;
+const TIME_LABELS: Record<TimeOfDay, string> = { day: 'Giorno', sunset: 'Tramonto', night: 'Notte', dawn: 'Alba' };
+const TIME_ICONS: Record<TimeOfDay, string> = { day: 'sun', sunset: 'sunset', night: 'moon', dawn: 'sunset' };
 const PANEL_LEAVE_MS = 220;
 const CUE_SECONDS = 1.15;
 const CUES_UNTIL_BEST = 600;
@@ -35,7 +37,7 @@ const CUES: Record<Kind, [string, string]> = {
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const ui = {
   score: $('score'), carrots: $('carrots'), hud: $('hud'), lives: $('lives'),
-  goal: $('goal'), goalMeters: $('goal-meters'),
+  goal: $('goal'), goalMeters: $('goal-meters'), daytime: $('daytime'),
   cue: $('cue'), cueKey: $('cue-key'), cueWord: $('cue-word'), toast: $('toast'),
   title: $('title'), start: $('start'), status: $('status'), titleBest: $('title-best'),
   over: $('over'), overScore: $('over-score'), overMeters: $('over-meters'), overCarrots: $('over-carrots'), overCarrotWord: $('over-carrot-word'), overBest: $('over-best'), rosette: $('rosette'), restart: $('restart'),
@@ -60,29 +62,6 @@ function saveSettings(settings: Settings) {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* settings are optional */ }
 }
 
-function skyTexture() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 256;
-  const ctx = canvas.getContext('2d')!;
-  const gradient = ctx.createLinearGradient(0, 0, 0, 256);
-  gradient.addColorStop(0, '#6fb4e8');
-  gradient.addColorStop(0.42, '#b9e2f4');
-  gradient.addColorStop(0.62, '#fdeee6');
-  gradient.addColorStop(1, '#fdeee6');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 512, 256);
-  const sun = ctx.createRadialGradient(390, 46, 6, 390, 46, 120);
-  sun.addColorStop(0, 'rgba(255, 248, 220, .95)');
-  sun.addColorStop(0.16, 'rgba(255, 244, 205, .55)');
-  sun.addColorStop(1, 'rgba(255, 244, 205, 0)');
-  ctx.fillStyle = sun;
-  ctx.fillRect(0, 0, 512, 256);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
-
 const retrigger = (element: HTMLElement, className: string) => {
   element.classList.remove(className);
   void element.offsetWidth;
@@ -95,16 +74,16 @@ async function main() {
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
   const scene = new THREE.Scene();
-  const sky = skyTexture();
-  scene.background = sky;
   scene.fog = new THREE.Fog(0xfdeee6, 70, 195);
-  scene.add(new THREE.HemisphereLight(0xfff5ee, 0xa8cf98, 1.25));
+  const hemi = new THREE.HemisphereLight(0xfff5ee, 0xa8cf98, 1.25);
+  scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffffff, 1.75);
   sun.position.set(-4, 9, 7);
   scene.add(sun);
   const faceFill = new THREE.DirectionalLight(0xffffff, 1);
   faceFill.position.set(0, 0.6, -8);
   scene.add(faceFill);
+  const dayNight = new DayNight(scene, { hemi, sun, fill: faceFill });
 
   const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 900);
   const look = new THREE.Vector3();
@@ -164,9 +143,6 @@ async function main() {
     camera.aspect = w / h;
     camera.fov = w < h ? 76 : 60;
     camera.updateProjectionMatrix();
-    // Crop the sky instead of stretching it, so the sun stays round on any screen.
-    sky.repeat.x = Math.min(1, w / h / SKY_ASPECT);
-    sky.offset.x = (1 - sky.repeat.x) / 2;
     measureTitle();
   }
   addEventListener('resize', resize);
@@ -262,6 +238,19 @@ async function main() {
     ui.goal.style.setProperty('--p', Math.max(0, Math.min(1, progress)).toFixed(4));
   }
 
+  let shownTime: TimeOfDay | null = null;
+  function syncTime() {
+    const now = dayNight.timeOfDay;
+    if (now === shownTime) return;
+    const first = shownTime === null;
+    shownTime = now;
+    ui.daytime.dataset.time = now;
+    ui.daytime.setAttribute('aria-label', TIME_LABELS[now]);
+    ui.daytime.title = TIME_LABELS[now];
+    ui.daytime.querySelector('use')!.setAttribute('href', `#i-${TIME_ICONS[now]}`);
+    if (!first) retrigger(ui.daytime, 'turn');
+  }
+
   /** While learning, shows the move for the obstacle straight ahead, at the moment it matters. */
   function syncCue() {
     let cue: Kind | null = null;
@@ -354,6 +343,9 @@ async function main() {
     drainEvents();
     effects.update(dt, sim.phase === 'running' ? sim.speed : 0, time);
     placeCamera(dt);
+    dayNight.update(sim.distance, dt, camera);
+    world.setLight(dayNight.night, dayNight.tint);
+    syncTime();
     syncScreens();
     syncHud();
     syncCue();
