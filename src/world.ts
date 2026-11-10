@@ -23,6 +23,7 @@ const COLORS = {
   gate: 0x1f62e0, gold: 0xffc53d,
   block: 0xffc21f, ink: 0x1c3250, silk: 0xc8173d,
   carrot: 0xff8412, carrotDark: 0xe2670a, leaf: 0x3fb13a, leafLight: 0x62c956,
+  lampPost: 0x4a5670, lampOff: 0xeae6da, lampOn: 0xfff1b0, lampGlow: 0xffd98a,
   petalPink: 0xf7a8c0, petalYellow: 0xffdc73, petalLilac: 0xc9b3f2, tuft: 0x8cc47b, stone: 0xd8d2c4,
   hill: 0xbfdccb, hillFar: 0xd2e6dc, cloud: 0xffffff,
 };
@@ -108,6 +109,31 @@ function fences(parts: G[], z: number) {
     }
   }
   for (let i = 0; i < 6; i++) parts.push(post(0.1, 0.8, 4.05, 3.2 + i * 0.8, z - 2, i % 2 ? COLORS.poleRed : COLORS.rail));
+  for (const [x, lz, side] of lampSpots(z)) {
+    parts.push(post(0.07, 3.4, x, 1.7, lz, COLORS.lampPost));
+    parts.push(soft(0.2, 0.16, 0.2, 0.04, x, 0.08, lz, COLORS.lampPost));
+    parts.push(box(LAMP_REACH, 0.07, 0.07, x - side * LAMP_REACH / 2, 3.38, lz, COLORS.lampPost));
+    parts.push(soft(0.42, 0.1, 0.42, 0.04, x - side * LAMP_REACH, 3.36, lz, COLORS.lampPost));
+  }
+}
+
+const LAMP_REACH = 0.6;
+const LAMP_EVERY = 16;
+
+/** Street lamps just outside the rail, every 16 m on alternating sides. */
+function lampSpots(z: number): [number, number, number][] {
+  const spots: [number, number, number][] = [];
+  for (let i = 0; i < LOOP / LAMP_EVERY; i++) {
+    const side = i % 2 ? 1 : -1;
+    spots.push([side * 4, z - i * LAMP_EVERY - 6, side]);
+  }
+  return spots;
+}
+
+function allLampSpots() {
+  const spots: [number, number, number][] = [];
+  for (let k = -2; k <= 3; k++) spots.push(...lampSpots(-k * LOOP));
+  return spots;
 }
 
 function grandstand(parts: G[], z: number) {
@@ -283,6 +309,42 @@ function archGeometry() {
   return mergeGeometries(parts);
 }
 
+function glowTexture(inner: string, outer: string) {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 64;
+  const ctx = canvas.getContext('2d')!;
+  const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gradient.addColorStop(0, inner);
+  gradient.addColorStop(1, outer);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(canvas);
+}
+
+function buildLampLights() {
+  const glass: G[] = [];
+  const glowAt: number[] = [];
+  const pools: G[] = [];
+  for (const [x, z, side] of allLampSpots()) {
+    const lx = x - side * LAMP_REACH;
+    glass.push(new THREE.CylinderGeometry(0.15, 0.11, 0.28, 8).translate(lx, 3.17, z));
+    glowAt.push(lx, 3.15, z);
+    pools.push(new THREE.CircleGeometry(1.9, 20).rotateX(-Math.PI / 2).scale(1, 1, 1.4).translate(lx, 0.03, z));
+  }
+  const additive = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 };
+  const glassMesh = new THREE.Mesh(mergeGeometries(glass), curved(new THREE.MeshBasicMaterial({ color: COLORS.lampOff })));
+  const points = new THREE.BufferGeometry();
+  points.setAttribute('position', new THREE.Float32BufferAttribute(glowAt, 3));
+  const glow = new THREE.Points(points, curved(new THREE.PointsMaterial({
+    ...additive, color: COLORS.lampGlow, size: 2.6, map: glowTexture('rgba(255,255,255,1)', 'rgba(255,255,255,0)'),
+  })));
+  const poolMesh = new THREE.Mesh(mergeGeometries(pools), curved(new THREE.MeshBasicMaterial({
+    ...additive, color: COLORS.lampGlow, map: glowTexture('rgba(255,255,255,.9)', 'rgba(255,255,255,0)'),
+  })));
+  for (const o of [glassMesh, glow, poolMesh]) o.frustumCulled = false;
+  return [glassMesh, glow, poolMesh] as const;
+}
+
 function shadowTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 128;
@@ -302,13 +364,29 @@ export class World {
   private carrots: THREE.InstancedMesh;
   private arches: THREE.InstancedMesh;
   private shadow: THREE.Mesh;
+  private lampGlass: THREE.Mesh<G, THREE.MeshBasicMaterial>;
+  private lampGlow: THREE.Points<G, THREE.PointsMaterial>;
+  private lampPools: THREE.Mesh<G, THREE.MeshBasicMaterial>;
   private matrix = new THREE.Matrix4();
   private spin = new THREE.Matrix4();
+  private lampColor = new THREE.Color();
+
+  /** Lights the lamps as night falls and tints the distant hills and clouds. */
+  setLight(night: number, tint: THREE.Color) {
+    const on = THREE.MathUtils.smoothstep(night, 0.25, 0.7);
+    this.lampGlass.material.color.setHex(COLORS.lampOff).lerp(this.lampColor.setHex(COLORS.lampOn), on);
+    this.lampGlow.material.opacity = on * 0.9;
+    this.lampPools.material.opacity = on * 0.5;
+    this.lampGlow.visible = this.lampPools.visible = on > 0.01;
+    (this.backdrop.material as THREE.MeshBasicMaterial).color.copy(tint);
+  }
 
   constructor(scene: THREE.Scene, props: Props) {
     const material = curved(new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toonGradient }));
     this.scenery = buildScenery(material, props);
     scene.add(this.scenery);
+    [this.lampGlass, this.lampGlow, this.lampPools] = buildLampLights();
+    this.scenery.add(this.lampGlass, this.lampGlow, this.lampPools);
     this.backdrop = buildBackdrop();
     scene.add(this.backdrop);
 
