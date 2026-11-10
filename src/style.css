@@ -124,11 +124,31 @@ html, body {
   justify-content: flex-end;
   gap: 4px;
   margin-top: 9px;
+  white-space: nowrap;
   font-size: 17px;
   line-height: 1;
   -webkit-text-stroke: 4px var(--ink);
   paint-order: stroke fill;
 }
+/* Time of day: a small badge that turns over when the sky changes. */
+#daytime {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin: -6px auto 0 0;
+  border: 2px solid var(--snow);
+  border-radius: 50%;
+  background: #b9e2f4;
+  box-shadow: 0 3px 0 rgba(22, 48, 77, .35);
+  transition: background-color .6s;
+}
+#daytime[data-time='sunset'], #daytime[data-time='dawn'] { background: #f6c0a8; }
+#daytime[data-time='night'] { background: #263766; }
+#goal-label #daytime svg { width: 24px; height: 24px; filter: none; }
+#daytime.turn { animation: turn .5s ease-out; }
+@keyframes turn { from { transform: rotateY(180deg) scale(.6); } }
+.calm #daytime.turn { animation: none; }
 #goal-label svg { width: 17px; height: 17px; color: var(--snow); filter: drop-shadow(0 0 1px var(--ink)) drop-shadow(0 0 1px var(--ink)); }
 
 .hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
@@ -462,7 +482,9 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
   .cta { font-size: 22px; padding: 10px 16px 12px; }
   .cloth .credits { margin: 12px 0 0; font-size: 12px; line-height: 1.35; }
   #settings { flex-direction: column; align-items: flex-end; }
-  #goal { width: 26vw; }
+  #goal { width: 30vw; }
+  #daytime { width: 28px; height: 28px; margin-top: -4px; }
+  #goal-label #daytime svg { width: 20px; height: 20px; }
 }
 
 @media (max-height: 600px) and (max-aspect-ratio: 3/4) {
@@ -471,7 +493,7 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cloth, .cloth.leaving, .rosette, #cue, #lives.hurt, .carrot-count.bump, .bump .pop, #goal-fill { animation: none; }
+  .cloth, .cloth.leaving, .rosette, #cue, #lives.hurt, .carrot-count.bump, .bump .pop, #goal-fill, #daytime.turn { animation: none; }
   .cta::after { display: none; }
   #toast.show { animation: toast-still 1.1s linear; }
   .cta, #lives svg { transition: none; }
