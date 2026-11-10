@@ -175,6 +175,7 @@ async function main() {
     for (const button of pickers) {
       const id = button.dataset.cast as CastId;
       button.setAttribute('aria-checked', String(id === chosen));
+      button.tabIndex = id === chosen ? 0 : -1;
       button.classList.toggle('waiting', id === chosen && id !== runner.id);
     }
   }
@@ -207,6 +208,19 @@ async function main() {
     effects.burst(sim.x, 1.2, 0, 28, SPARKLE, { speed: 4, size: 0.06, life: 0.9, scroll: 0 });
   }
   for (const button of pickers) button.addEventListener('click', () => choose(button.dataset.cast as CastId));
+  // Arrow keys move between the cards, as in any radio group.
+  for (const group of document.querySelectorAll<HTMLElement>('.picker')) {
+    group.addEventListener('keydown', e => {
+      const step = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[e.key];
+      if (!step) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const cards = [...group.querySelectorAll<HTMLButtonElement>('.pick')];
+      const next = cards[(cards.indexOf(document.activeElement as HTMLButtonElement) + step + cards.length) % cards.length];
+      next.focus();
+      next.click();
+    });
+  }
   showCast();
 
   ui.titleBest.hidden = best === 0;
