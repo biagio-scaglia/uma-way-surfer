@@ -48,6 +48,6 @@ Modelli di [ansaldotoys2](https://sketchfab.com/ansaldotoys2), licenza [CC-BY 4.
 
 In gioco materiali e geometria vengono adattati (materiali toon, rimozione della mesh duplicata) e il modello è animato via codice.
 
-Alberi, fiori, erba, cespugli e sassi vengono dal [Nature Kit](https://kenney.nl/assets/nature-kit) di [Kenney](https://kenney.nl), licenza [CC0](http://creativecommons.org/publicdomain/zero/1.0/). Sono in `models/kenney/` e in gioco vengono ricolorati con la palette della pista.
+Alberi, fiori, erba, cespugli, sassi, bancarelle, vasi, orto, ceppi, tronchi e funghi vengono dal [Nature Kit](https://kenney.nl/assets/nature-kit) di [Kenney](https://kenney.nl), licenza [CC0](http://creativecommons.org/publicdomain/zero/1.0/). Sono in `models/kenney/` e in gioco vengono ricolorati con la palette della pista.
 
 Personaggi e serie Uma Musume appartengono ai rispettivi titolari dei diritti.
