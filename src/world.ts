@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { LANE_X, MILESTONE, type Kind, type Sim } from './sim';
+import type { Props } from './props';
 import { curve, curved, toonGradient } from './toon';
 
 const LOOP = 96;
@@ -22,10 +23,9 @@ const COLORS = {
   gate: 0x1f62e0, gold: 0xffc53d,
   block: 0xffc21f, ink: 0x1c3250, silk: 0xc8173d,
   carrot: 0xff8412, carrotDark: 0xe2670a, leaf: 0x3fb13a, leafLight: 0x62c956,
+  petalPink: 0xf7a8c0, petalYellow: 0xffdc73, petalLilac: 0xc9b3f2, tuft: 0x8cc47b, stone: 0xd8d2c4,
   hill: 0xbfdccb, hillFar: 0xd2e6dc, cloud: 0xffffff,
 };
-
-const FLOWERS = [0xffffff, 0xf7a8c0, 0xffd65a, 0xd9b8f0];
 
 type G = THREE.BufferGeometry;
 
@@ -100,12 +100,6 @@ function fences(parts: G[], z: number) {
       parts.push(paint(new THREE.CylinderGeometry(0.06, 0.06, 4, 6).rotateX(Math.PI / 2).translate(x, 1.08, tz - 2), COLORS.rail));
       parts.push(blob(0.85, side * 5, 0.42, tz - 1, COLORS.hedge, 2));
       parts.push(blob(0.62, side * 4.9, 0.72, tz - 2.6, COLORS.hedgeLight, 2));
-      // A few flowers peeking out of the hedge, pale enough to stay in the background.
-      for (let f = 0; f < 3; f++) {
-        const fz = tz - 0.6 - f * 1.2;
-        const fy = 0.55 + ((i + f) % 3) * 0.18;
-        parts.push(blob(0.065, side * (4.25 + (f % 2) * 0.15), fy, fz, FLOWERS[(i + f + (side > 0 ? 1 : 0)) % FLOWERS.length]));
-      }
       if (i % 6 === 0) {
         parts.push(post(0.035, 2.2, x, 2.1, tz, COLORS.rail));
         parts.push(paint(new THREE.ConeGeometry(0.26, 0.8, 3).rotateZ(-side * Math.PI / 2).scale(1, 0.7, 0.15)
@@ -129,28 +123,61 @@ function grandstand(parts: G[], z: number) {
   }
 }
 
-function trees(parts: G[], z: number) {
+/** Adds a Kenney prop, repainting each of its materials from our palette. */
+function place(parts: G[], props: Props, name: string, colors: Record<string, number>, scale: number, x: number, z: number, turn = 0) {
+  for (const part of props.get(name) ?? []) {
+    const g = part.geometry.clone().scale(scale, scale, scale).rotateY(turn).translate(x, 0, z);
+    parts.push(paint(g, colors[part.material] ?? colors.other));
+  }
+}
+
+const TREES = ['tree_oak', 'tree_default', 'tree_detailed', 'tree_fat', 'tree_plateau'];
+
+function trees(parts: G[], props: Props, z: number) {
   const rand = seeded(11);
   for (let i = 0; i < 22; i++) {
     const right = i % 5 !== 0;
     const x = right ? 10 + rand() * 32 : -(46 + rand() * 12);
     const tz = z - rand() * LOOP;
     const size = 1.5 + rand() * 1.4;
-    parts.push(paint(new THREE.CylinderGeometry(0.18, 0.32, size * 2, 7).translate(x, size, tz), COLORS.trunk));
-    parts.push(blob(size * 1.25, x, size * 2.5, tz, COLORS.sakura));
-    parts.push(blob(size * 0.85, x + size * 0.8, size * 2.1, tz + 0.5, COLORS.sakuraPale));
-    parts.push(blob(size * 0.8, x - size * 0.8, size * 2.25, tz - 0.4, COLORS.sakura));
+    const leaves = i % 3 ? COLORS.sakura : COLORS.sakuraPale;
+    place(parts, props, TREES[i % TREES.length], { leafsGreen: leaves, woodBark: COLORS.trunk, other: COLORS.sakuraPale },
+      size * 3.2, x, tz, rand() * Math.PI * 2);
   }
 }
 
-function buildScenery(material: THREE.Material) {
+const FLOWER_KINDS = ['flower_redA', 'flower_yellowA', 'flower_purpleA'];
+
+function meadow(parts: G[], props: Props, z: number) {
+  const rand = seeded(23);
+  const flowerColors = { grass: COLORS.hedge, colorRed: COLORS.petalPink, colorYellow: COLORS.petalYellow, colorPurple: COLORS.petalLilac, other: COLORS.hedge };
+  for (const side of [-1, 1]) {
+    // Flowers at the foot of the hedge, where the eye passes on its way down the track.
+    for (let i = 0; i < LOOP / 2; i++) {
+      place(parts, props, FLOWER_KINDS[(i + (side > 0 ? 1 : 0)) % 3], flowerColors,
+        1.7 + rand() * 0.5, side * (4.12 + rand() * 0.12), z - i * 2 - rand(), rand() * 6);
+    }
+    // Beyond the hedge: tufts of grass, a few bushes and stones on the verge.
+    for (let i = 0; i < 18; i++) {
+      const x = side * (6.2 + rand() * (side > 0 ? 3 : 8));
+      const tz = z - rand() * LOOP;
+      const pick = rand();
+      if (pick < 0.55) place(parts, props, 'grass_large', { grass: COLORS.tuft, other: COLORS.tuft }, 2.6, x, tz, rand() * 6);
+      else if (pick < 0.85) place(parts, props, 'plant_bushDetailed', { grass: COLORS.hedgeLight, other: COLORS.hedgeLight }, 2.4, x, tz, rand() * 6);
+      else place(parts, props, 'rock_smallA', { grass: COLORS.tuft, dirt: COLORS.stone, other: COLORS.stone }, 2, x, tz, rand() * 6);
+    }
+  }
+}
+
+function buildScenery(material: THREE.Material, props: Props) {
   const parts: G[] = [];
   for (let k = -2; k <= 3; k++) {
     const z = -k * LOOP;
     ground(parts, z);
     fences(parts, z);
     grandstand(parts, z);
-    trees(parts, z);
+    trees(parts, props, z);
+    meadow(parts, props, z);
   }
   const mesh = new THREE.Mesh(mergeGeometries(parts), material);
   mesh.frustumCulled = false;
@@ -278,9 +305,9 @@ export class World {
   private matrix = new THREE.Matrix4();
   private spin = new THREE.Matrix4();
 
-  constructor(scene: THREE.Scene) {
+  constructor(scene: THREE.Scene, props: Props) {
     const material = curved(new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toonGradient }));
-    this.scenery = buildScenery(material);
+    this.scenery = buildScenery(material, props);
     scene.add(this.scenery);
     this.backdrop = buildBackdrop();
     scene.add(this.backdrop);
