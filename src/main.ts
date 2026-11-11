@@ -9,10 +9,13 @@ import { DayNight, type TimeOfDay } from './daynight';
 import { Effects } from './effects';
 import { bindInput } from './input';
 import { loadProps } from './props';
+import { Quality } from './quality';
 import { LANE_X, MILESTONE, POWER_TIME, Sim, type Kind, type Power, type Timed } from './sim';
 import { World } from './world';
 
 const STEP = 1 / 120;
+// On 120 Hz screens draw every other refresh: 60 fps look the same and halve the work and heat.
+const MIN_FRAME_MS = 10;
 const BEST_KEY = 'uma-way-surfer-best';
 const SETTINGS_KEY = 'uma-way-surfer-settings';
 const CAST_KEY = 'uma-way-surfer-character';
@@ -92,8 +95,9 @@ const retrigger = (element: HTMLElement, className: string) => {
 
 async function main() {
   const canvas = $<HTMLCanvasElement>('game');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  // On dense screens the pixels are too small for jagged edges to show: skip the costly antialiasing.
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: devicePixelRatio < 2, powerPreference: 'high-performance' });
+  const quality = new Quality(renderer);
 
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(0xfdeee6, 70, 195);
@@ -177,6 +181,7 @@ async function main() {
     camera.fov = baseFov + rush * SPURT_FOV;
     camera.updateProjectionMatrix();
     measureTitle();
+    quality.settle();
   }
   addEventListener('resize', resize);
   resize();
@@ -506,6 +511,8 @@ async function main() {
   }
 
   function frame(now: number) {
+    if (now - last < MIN_FRAME_MS) { requestAnimationFrame(frame); return; }
+    quality.frame(now, now - last);
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
     time += dt;
@@ -532,7 +539,7 @@ async function main() {
     requestAnimationFrame(frame);
   }
 
-  if (import.meta.env.DEV) Object.assign(window, { __game: { sim, camera, scene } });
+  if (import.meta.env.DEV) Object.assign(window, { __game: { sim, camera, scene, renderer, quality } });
 
   setPortrait(runner.id);
   // The other runner downloads quietly once the game is ready, so switching is instant.
