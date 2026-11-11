@@ -8,6 +8,19 @@ Alla prima visita il gioco si scarica tutto nel browser (circa 9 MB: personaggi,
 
 Scegli chi corre tra Tokai Teio, Meisho Doto e Daiwa Scarlet, salta le staccionate, scivola sotto gli striscioni, evita i box di partenza e raccogli carote. Ogni 250 metri c'è un traguardo. Intanto passa la giornata: verso i 400 metri il sole tramonta in fondo alla pista, poi arrivano luna, stelle e lampioni accesi, e a 1000 metri torna l'alba.
 
+## Power-up
+
+Dai 300 metri in poi, ogni tanto in pista compare un oggetto dentro una bolla colorata:
+
+| Oggetto | Effetto |
+|---|---|
+| Coppa d'oro | Punti doppi per 10 secondi |
+| Calamita | Attira le carote di tutte le corsie per 10 secondi |
+| Fulmine | Scatto finale: 5 secondi più veloce, travolgendo gli ostacoli |
+| Ferro di cavallo | Restituisce una vita persa (compare solo se ne hai perse) |
+
+In alto a destra un'icona con un anello mostra quanto tempo resta. In modalità calma gli effetti durano di più.
+
 ## Comandi
 
 | Mossa | Tastiera | Telefono |
@@ -54,5 +67,12 @@ Modelli di [ansaldotoys2](https://sketchfab.com/ansaldotoys2), licenza [CC-BY 4.
 In gioco materiali e geometria vengono adattati (materiali toon, rimozione della mesh duplicata) e il modello è animato via codice.
 
 Alberi, fiori, erba, cespugli, sassi, bancarelle, vasi, orto, ceppi, tronchi e funghi vengono dal [Nature Kit](https://kenney.nl/assets/nature-kit) di [Kenney](https://kenney.nl), licenza [CC0](http://creativecommons.org/publicdomain/zero/1.0/). Sono in `models/kenney/` e in gioco vengono ricolorati con la palette della pista.
+
+I modelli dei power-up vengono da OpenGameArt, licenza [CC0](http://creativecommons.org/publicdomain/zero/1.0/), convertiti in GLB con Blender e ricolorati in gioco. Sono in `models/power/`:
+
+- coppa: ["Trophy"](https://opengameart.org/content/trophy) di JeremyWoods
+- calamita: ["Magnet"](https://opengameart.org/content/magnet) di Savino
+- fulmine: ["Bolt"](https://opengameart.org/content/bolt) di Savino
+- ferro di cavallo: da ["32 Low Poly Models"](https://opengameart.org/content/32-low-poly-models) di Drummyfish
 
 Personaggi e serie Uma Musume appartengono ai rispettivi titolari dei diritti.
