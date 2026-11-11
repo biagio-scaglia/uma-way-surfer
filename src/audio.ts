@@ -46,6 +46,17 @@ export class Sfx {
     [0, 2, 4, 5].forEach((note, i) => this.tone(SCALE[note], 0.2, 'triangle', 0.15, i * 0.08));
   }
 
+  /** A bright rising arpeggio, distinct from the milestone fanfare. */
+  power() {
+    [0, 2, 4, 7].forEach((note, i) => this.tone(SCALE[note] * 1.5, 0.14, 'square', 0.06, i * 0.05));
+    this.tone(SCALE[7], 0.4, 'triangle', 0.1, 0.2);
+  }
+
+  /** Soft and short: the effect is over, nothing went wrong. */
+  powerEnd() { this.tone(SCALE[4], 0.22, 'sine', 0.08, 0, SCALE[0]); }
+
+  smash() { this.tone(240, 0.14, 'triangle', 0.1, 0, 120); }
+
   gameOver() {
     [4, 3, 2, 0].forEach((note, i) => this.tone(SCALE[note] / 2, 0.24, 'triangle', 0.12, i * 0.12));
   }
