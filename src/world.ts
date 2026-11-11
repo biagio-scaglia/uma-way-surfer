@@ -71,7 +71,7 @@ const box = (w: number, h: number, d: number, x: number, y: number, z: number, c
   paint(new THREE.BoxGeometry(w, h, d).translate(x, y, z), c);
 
 const soft = (w: number, h: number, d: number, radius: number, x: number, y: number, z: number, c: number) =>
-  paint(new RoundedBoxGeometry(w, h, d, 2, radius).translate(x, y, z), c);
+  paint(new RoundedBoxGeometry(w, h, d, 1, radius).translate(x, y, z), c);
 
 const post = (radius: number, h: number, x: number, y: number, z: number, c: number) =>
   paint(new THREE.CylinderGeometry(radius, radius, h, 8).translate(x, y, z), c);
@@ -117,8 +117,8 @@ function fences(parts: G[], z: number) {
       const x = side * 3.6;
       parts.push(post(0.06, 1.1, x, 0.55, tz, COLORS.rail));
       parts.push(paint(new THREE.CylinderGeometry(0.06, 0.06, 4, 6).rotateX(Math.PI / 2).translate(x, 1.08, tz - 2), COLORS.rail));
-      parts.push(blob(0.85, side * 5, 0.42, tz - 1, COLORS.hedge, 2));
-      parts.push(blob(0.62, side * 4.9, 0.72, tz - 2.6, COLORS.hedgeLight, 2));
+      parts.push(blob(0.85, side * 5, 0.42, tz - 1, COLORS.hedge));
+      parts.push(blob(0.62, side * 4.9, 0.72, tz - 2.6, COLORS.hedgeLight));
       if (i % 6 === 0) {
         parts.push(post(0.035, 2.2, x, 2.1, tz, COLORS.rail));
         parts.push(paint(new THREE.ConeGeometry(0.26, 0.8, 3).rotateZ(-side * Math.PI / 2).scale(1, 0.7, 0.15)
@@ -129,9 +129,9 @@ function fences(parts: G[], z: number) {
   for (let i = 0; i < 6; i++) parts.push(post(0.1, 0.8, 4.05, 3.2 + i * 0.8, z - 2, i % 2 ? COLORS.poleRed : COLORS.rail));
   for (const [x, lz, side] of lampSpots(z)) {
     parts.push(post(0.07, 3.4, x, 1.7, lz, COLORS.lampPost));
-    parts.push(soft(0.2, 0.16, 0.2, 0.04, x, 0.08, lz, COLORS.lampPost));
+    parts.push(box(0.2, 0.16, 0.2, x, 0.08, lz, COLORS.lampPost));
     parts.push(box(LAMP_REACH, 0.07, 0.07, x - side * LAMP_REACH / 2, 3.38, lz, COLORS.lampPost));
-    parts.push(soft(0.42, 0.1, 0.42, 0.04, x - side * LAMP_REACH, 3.36, lz, COLORS.lampPost));
+    parts.push(box(0.42, 0.1, 0.42, x - side * LAMP_REACH, 3.36, lz, COLORS.lampPost));
   }
 }
 
@@ -243,7 +243,7 @@ function meadow(parts: G[], props: Props, z: number) {
       const x = side * (6.2 + rand() * (side > 0 ? 3 : 8));
       const tz = z - rand() * LOOP;
       const pick = rand();
-      if (pick < 0.55) place(parts, props, 'grass_large', { grass: COLORS.tuft, other: COLORS.tuft }, 2.6, x, tz, rand() * 6);
+      if (pick < 0.55) place(parts, props, 'grass_leafs', { grass: COLORS.tuft, other: COLORS.tuft }, 4, x, tz, rand() * 6);
       else if (pick < 0.85) place(parts, props, 'plant_bushDetailed', { grass: COLORS.hedgeLight, other: COLORS.hedgeLight }, 2.4, x, tz, rand() * 6);
       else place(parts, props, 'rock_smallA', { grass: COLORS.tuft, dirt: COLORS.stone, other: COLORS.stone }, 2, x, tz, rand() * 6);
     }
@@ -271,7 +271,7 @@ function garden(parts: G[], props: Props, z: number) {
       for (let seg = 0; seg < 4; seg++) {
         const sz = start - seg * 2.4;
         place(parts, props, 'crops_dirtRow', soil, 2.4, x, sz, Math.PI / 2);
-        for (const off of [-0.6, 0.6]) place(parts, props, 'crop_carrot', carrot, 1.5, x, sz + off, row + seg);
+        place(parts, props, 'crop_carrot', carrot, 1.7, x, sz, row + seg);
       }
     }
   }
@@ -292,22 +292,48 @@ function woodland(parts: G[], props: Props, z: number) {
   }
 }
 
+const CHUNK = 32;
+/** Small props (flowers, grass, garden, stalls) are only drawn this close: the fog hides them further on. */
+const DETAIL_RANGE = 110;
+
+/**
+ * The scenery is split into 32 m slices, each a single mesh, so the GPU skips every slice
+ * outside the view. Five copies of the loop: behind the camera (seen on the title screen) up to the fog.
+ */
 function buildScenery(material: THREE.Material, props: Props) {
   const parts: G[] = [];
-  for (let k = -2; k <= 3; k++) {
+  const details: G[] = [];
+  for (let k = -2; k <= 2; k++) {
     const z = -k * LOOP;
     ground(parts, z);
     fences(parts, z);
     grandstand(parts, z);
     trees(parts, props, z);
-    meadow(parts, props, z);
-    paddock(parts, props, z);
-    garden(parts, props, z);
-    woodland(parts, props, z);
+    meadow(details, props, z);
+    paddock(details, props, z);
+    garden(details, props, z);
+    woodland(details, props, z);
   }
-  const mesh = new THREE.Mesh(mergeGeometries(parts), material);
-  mesh.frustumCulled = false;
-  return mesh;
+  const group = new THREE.Group();
+  const detailMeshes: THREE.Mesh[] = [];
+  for (const [list, isDetail] of [[parts, false], [details, true]] as const) {
+    const slices = new Map<number, G[]>();
+    for (const part of list) {
+      part.computeBoundingBox();
+      const key = Math.floor((part.boundingBox!.min.z + part.boundingBox!.max.z) / 2 / CHUNK);
+      if (!slices.has(key)) slices.set(key, []);
+      slices.get(key)!.push(part);
+    }
+    for (const slice of slices.values()) {
+      const mesh = new THREE.Mesh(mergeGeometries(slice), material);
+      mesh.geometry.computeBoundingSphere();
+      // The curved-world shader moves far vertices a little: a roomier sphere avoids popping.
+      mesh.geometry.boundingSphere!.radius *= 1.25;
+      group.add(mesh);
+      if (isDetail) detailMeshes.push(mesh);
+    }
+  }
+  return { group, detailMeshes };
 }
 
 function buildBackdrop() {
@@ -324,7 +350,7 @@ function buildBackdrop() {
       const y = 62 + rand() * 90;
       const r = 12 + rand() * 12;
       for (let puff = -1; puff <= 1; puff++) {
-        parts.push(paint(new THREE.IcosahedronGeometry(1, 2).scale(r * (puff ? 0.8 : 1.1), r * 0.5, 10)
+        parts.push(paint(new THREE.IcosahedronGeometry(1, 1).scale(r * (puff ? 0.8 : 1.1), r * 0.5, 10)
           .translate(x + puff * r * 1.05, y + (puff ? -r * 0.12 : 0), side * 390), COLORS.cloud));
       }
     }
@@ -384,13 +410,13 @@ function blockGeometry() {
 function carrotGeometry() {
   const profile = [[0, -0.46], [0.06, -0.34], [0.13, -0.08], [0.19, 0.2], [0.17, 0.32], [0.09, 0.37], [0, 0.38]]
     .map(([r, y]) => new THREE.Vector2(r, y));
-  const parts = [paint(new THREE.LatheGeometry(profile, 12), COLORS.carrot)];
+  const parts = [paint(new THREE.LatheGeometry(profile, 10), COLORS.carrot)];
   for (const [r, y] of [[0.155, 0.12], [0.11, -0.12], [0.075, -0.28]]) {
-    parts.push(paint(new THREE.TorusGeometry(r, 0.012, 4, 12).rotateX(Math.PI / 2).translate(0, y, 0), COLORS.carrotDark));
+    parts.push(paint(new THREE.TorusGeometry(r, 0.012, 3, 10).rotateX(Math.PI / 2).translate(0, y, 0), COLORS.carrotDark));
   }
   for (let i = 0; i < 5; i++) {
     const angle = (i - 2) * 0.42;
-    parts.push(paint(new THREE.IcosahedronGeometry(1, 1).scale(0.07, 0.17, 0.03)
+    parts.push(paint(new THREE.IcosahedronGeometry(1, 0).scale(0.07, 0.17, 0.03)
       .translate(0, 0.16, 0).rotateZ(angle).translate(0, 0.35, 0), i % 2 ? COLORS.leafLight : COLORS.leaf));
   }
   return mergeGeometries(parts);
@@ -480,7 +506,8 @@ function shadowTexture() {
 }
 
 export class World {
-  private scenery: THREE.Mesh;
+  private scenery: THREE.Group;
+  private details: THREE.Mesh[];
   private backdrop: THREE.Mesh;
   private instances: Record<Kind, THREE.InstancedMesh>;
   private carrots: THREE.InstancedMesh;
@@ -509,7 +536,7 @@ export class World {
 
   constructor(scene: THREE.Scene, props: Props) {
     const material = curved(new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toonGradient }));
-    this.scenery = buildScenery(material, props);
+    ({ group: this.scenery, detailMeshes: this.details } = buildScenery(material, props));
     scene.add(this.scenery);
     [this.lampGlass, this.lampGlow, this.lampPools] = buildLampLights();
     this.scenery.add(this.lampGlass, this.lampGlow, this.lampPools);
@@ -560,6 +587,9 @@ export class World {
 
   sync(sim: Sim, time: number) {
     this.scenery.position.z = sim.distance % LOOP;
+    for (const mesh of this.details) {
+      mesh.visible = Math.abs(mesh.geometry.boundingSphere!.center.z + this.scenery.position.z) < DETAIL_RANGE;
+    }
     this.backdrop.position.x = Math.sin(time * 0.02) * 24;
     curve.uCurveX.value = Math.sin(sim.distance * 0.006) * 0.0016;
 
