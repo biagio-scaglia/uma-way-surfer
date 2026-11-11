@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import daiwaUrl from '../models/daiwa_scarlet_-_uma_musume.glb?url';
 import dotoUrl from '../models/meisho_doto_-_uma_musume.glb?url';
 import teioUrl from '../models/tokai_teio_-_uma_musume.glb?url';
 import { Animator } from './animation';
@@ -18,6 +19,12 @@ export const CAST = {
     url: dotoUrl,
     title: 'Meisho Doto - Uma Musume',
     page: 'https://sketchfab.com/3d-models/meisho-doto-uma-musume-91c12bfd72b843929dc88a3857ce3593',
+  },
+  daiwa: {
+    name: 'Daiwa Scarlet',
+    url: daiwaUrl,
+    title: 'Daiwa Scarlet - Uma Musume',
+    page: 'https://sketchfab.com/3d-models/daiwa-scarlet-uma-musume-6fdd3062fa924b15a4dd0f7493c44617',
   },
 } as const;
 
