@@ -4,7 +4,7 @@ Fangame non commerciale: un endless runner 3D a tre corsie, ambientato in un ipp
 
 **Gioca qui:** https://biagio-scaglia.github.io/uma-way-surfer/
 
-Alla prima visita il gioco si scarica tutto nel browser (circa 9 MB: personaggi, ambiente, codice e font). Le volte successive parte subito, anche senza connessione, e dopo un aggiornamento scarica solo i file cambiati. Se ti è piaciuto, lascia una stella al repository ⭐
+Alla prima visita il gioco si scarica tutto nel browser (circa 4 MB: personaggi, ambiente, codice e font). Le volte successive parte subito, anche senza connessione, e dopo un aggiornamento scarica solo i file cambiati. Se ti è piaciuto, lascia una stella al repository ⭐
 
 Scegli chi corre tra Tokai Teio, Meisho Doto e Daiwa Scarlet, salta le staccionate, scivola sotto gli striscioni, evita i box di partenza e raccogli carote. Ogni 250 metri c'è un traguardo. Intanto passa la giornata: verso i 400 metri il sole tramonta in fondo alla pista, poi arrivano luna, stelle e lampioni accesi, e a 1000 metri torna l'alba.
 
@@ -51,6 +51,8 @@ npm run dev
 ```
 
 La cache è gestita da `public/sw.js`, attivo solo nella versione pubblicata; l'elenco dei file da scaricare lo genera la build (`vite.config.ts`).
+
+Per restare fluido anche sui telefoni meno potenti, il gioco abbassa da solo la risoluzione quando i fotogrammi rallentano e la rialza quando c'è margine; sugli schermi a 120 Hz si ferma a 60 fps per consumare meno batteria. I modelli dei personaggi sono compressi: dopo averne aggiunto uno nuovo in `models/`, esegui `npm run models`.
 
 `npm run build` crea la versione pubblicabile in `dist/`. Ogni push su `main` la pubblica su GitHub Pages tramite GitHub Actions, se in **Settings → Pages** la sorgente è impostata su **GitHub Actions**.
 
