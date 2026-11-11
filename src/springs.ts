@@ -13,7 +13,7 @@ const GROUPS: [RegExp, Tuning][] = [
   [/^Sp_He_/, { stiffness: 20, damping: 0.3, gravity: 1, wind: 2.2, collide: false }],
   [/^Sp_El_/, { stiffness: 42, damping: 0.4, gravity: 1, wind: 1, collide: false }],
   [/^Sp_(So|Ch)_Mantle/, { stiffness: 26, damping: 0.35, gravity: 1, wind: 1.6, collide: false }],
-  [/^Sp_(Ch_Ribbon|An_|Kn_|Si_)/, { stiffness: 16, damping: 0.25, gravity: 1, wind: 3, collide: false }],
+  [/^Sp_(Ch_Ribbon|Ch_Acc|An_|Kn_|Si_)/, { stiffness: 16, damping: 0.25, gravity: 1, wind: 3, collide: false }],
 ];
 
 interface Joint {
