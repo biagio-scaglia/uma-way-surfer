@@ -166,6 +166,18 @@ async function main() {
   addEventListener('resize', resize);
   resize();
 
+  // One card per runner in CAST, on both the start and the results screen.
+  for (const group of document.querySelectorAll('.picker')) {
+    for (const [id, { name }] of Object.entries(CAST)) {
+      const button = document.createElement('button');
+      button.className = 'pick';
+      button.setAttribute('role', 'radio');
+      button.dataset.cast = id;
+      button.innerHTML = '<span class="pick-face"><img alt="" hidden></span><span class="pick-name"></span>';
+      button.querySelector('.pick-name')!.textContent = name;
+      group.append(button);
+    }
+  }
   const pickers = [...document.querySelectorAll<HTMLButtonElement>('.pick')];
 
   function showCast() {

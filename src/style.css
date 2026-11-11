@@ -435,19 +435,20 @@ html, body {
 .stats b { font: 400 18px/1 var(--display); }
 
 /* Character choice: the runner on screen is the preview, these cards just switch it. */
-.picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 18px; }
+.picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 10px; margin: 0 0 18px; }
 .pick {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   min-height: 60px;
-  padding: 6px 10px 6px 6px;
+  padding: 8px 6px 9px;
   border: 0;
-  border-radius: 99px;
+  border-radius: 18px;
   background: var(--silk-deep);
   color: var(--snow);
-  font: 400 15px/1.05 var(--display);
-  text-align: left;
+  font: 400 14px/1.05 var(--display);
+  text-align: center;
   cursor: pointer;
   box-shadow: inset 0 0 0 2px rgba(255, 253, 248, .25);
   transition: transform .12s, background-color .12s;
@@ -457,8 +458,8 @@ html, body {
   flex: none;
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   overflow: hidden;
   border: 3px solid rgba(255, 253, 248, .5);
   border-radius: 50%;
@@ -564,7 +565,7 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
   .cta { font-size: 20px; padding: 8px 14px 10px; }
   .cloth .credits { margin-top: 8px; font-size: 12px; }
   .picker { margin-bottom: 8px; }
-  .pick { min-height: 44px; font-size: 13px; }
+  .pick { flex-direction: row; min-height: 44px; padding: 4px 8px 4px 4px; border-radius: 99px; font-size: 12px; text-align: left; }
   .pick-face { width: 34px; height: 34px; border-width: 2px; }
   #settings { flex-direction: column; align-items: flex-end; }
 }
@@ -580,8 +581,8 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
   .legend svg { max-height: 48px; }
   .cta { font-size: 22px; padding: 10px 16px 12px; }
   .picker { gap: 8px; margin-bottom: 12px; }
-  .pick { min-height: 52px; gap: 8px; font-size: 14px; }
-  .pick-face { width: 40px; height: 40px; }
+  .pick { gap: 5px; padding: 6px 4px 7px; font-size: 12px; }
+  .pick-face { width: 46px; height: 46px; }
   .cloth .credits { margin: 12px 0 0; font-size: 12px; line-height: 1.35; }
   #settings { flex-direction: column; align-items: flex-end; }
   /* Phones: score and goal on the left, carrots and pause on the right, the middle stays clear. */
