@@ -13,18 +13,33 @@ const MAX_QUEUED_EVENTS = 64;
 export const LIVES = 3;
 export const MILESTONE = 250;
 
+// Power-ups: none before the player knows the basics, then one every 150–250 m.
+const POWER_FROM = 300;
+const POWER_GAP = 150;
+const POWER_GAP_RANDOM = 100;
+export const POWER_TIME = { double: 10, magnet: 10, spurt: 5 };
+const SPURT_SPEED = 1.5;
+const SPURT_GRACE = 1;
+export const MAGNET_RANGE = 12;
+
 export type Kind = 'hurdle' | 'gate' | 'block';
 export type Phase = 'ready' | 'running' | 'paused' | 'over';
 
 export interface Obstacle { kind: Kind; lane: number; s: number; len: number }
-export interface Carrot { lane: number; s: number; y: number }
+export interface Carrot { lane: number; s: number; y: number; pulled?: boolean }
+export type Timed = keyof typeof POWER_TIME;
+export type Power = Timed | 'shoe';
+export interface Pickup { kind: Power; lane: number; s: number; y: number }
 export type GameEvent =
   | { type: 'carrot'; lane: number; y: number }
   | { type: 'hit'; kind: Kind }
   | { type: 'jump' }
   | { type: 'slide' }
   | { type: 'land' }
-  | { type: 'milestone'; meters: number };
+  | { type: 'milestone'; meters: number }
+  | { type: 'power'; kind: Power; lane: number; y: number }
+  | { type: 'powerEnd'; kind: Timed }
+  | { type: 'smash'; kind: Kind; lane: number };
 
 const CELL: Record<string, Kind> = { H: 'hurdle', G: 'gate', B: 'block' };
 
@@ -53,6 +68,12 @@ export class Sim {
   hit: Kind | null = null;
   obstacles: Obstacle[] = [];
   carrots: Carrot[] = [];
+  pickups: Pickup[] = [];
+  /** Seconds left on each timed power-up; 0 when off. */
+  powers: Record<Timed, number> = { double: 0, magnet: 0, spurt: 0 };
+  /** Calm mode makes power-ups last longer. */
+  powerScale = 1;
+  points = 0;
   lives = LIVES;
   invincibleT = 0;
   nextMilestone = MILESTONE;
@@ -64,16 +85,20 @@ export class Sim {
   private carrotLane = 1;
   private buffered: 'jump' | 'slide' | null = null;
   private bufferT = 0;
+  private graceT = 0;
+  private nextPowerAt = POWER_FROM;
+  private lastPower: Power | null = null;
 
   constructor(rand: () => number = Math.random) {
     this.rand = rand;
     this.fill();
   }
 
-  get speed() { return speedAt(this.distance) * this.pace; }
+  get speed() { return speedAt(this.distance) * this.pace * (this.powers.spurt > 0 ? SPURT_SPEED : 1); }
+  get multiplier() { return this.powers.double > 0 ? 2 : 1; }
   get sliding() { return this.slideT > 0; }
   get airborne() { return this.y > 0; }
-  get score() { return Math.floor(this.distance) + this.carrotsTaken * 10; }
+  get score() { return Math.floor(this.points); }
 
   start() {
     if (this.phase === 'running' || this.phase === 'paused') return;
@@ -98,6 +123,12 @@ export class Sim {
     this.events = [];
     this.obstacles = [];
     this.carrots = [];
+    this.pickups = [];
+    this.powers = { double: 0, magnet: 0, spurt: 0 };
+    this.points = 0;
+    this.graceT = 0;
+    this.nextPowerAt = POWER_FROM;
+    this.lastPower = null;
     this.nextS = 60;
     this.carrotLane = 1;
     this.buffered = null;
@@ -144,7 +175,19 @@ export class Sim {
   step(dt: number) {
     if (this.phase !== 'running') return;
 
-    this.distance += this.speed * dt;
+    const travelled = this.speed * dt;
+    this.distance += travelled;
+    this.points += travelled * this.multiplier;
+    this.graceT = Math.max(0, this.graceT - dt);
+    for (const kind of Object.keys(this.powers) as Timed[]) {
+      if (this.powers[kind] === 0) continue;
+      this.powers[kind] = Math.max(0, this.powers[kind] - dt);
+      if (this.powers[kind] === 0) {
+        this.emit({ type: 'powerEnd', kind });
+        // Coming out of a spurt mid-obstacle should not cost a life.
+        if (kind === 'spurt') this.graceT = SPURT_GRACE;
+      }
+    }
     this.x = LANE_X[this.lane] + (this.x - LANE_X[this.lane]) * Math.exp(-dt * 18);
     this.slideT = Math.max(0, this.slideT - dt);
     this.bufferT -= dt;
@@ -171,6 +214,7 @@ export class Sim {
 
     this.fill();
     this.collectCarrots();
+    this.collectPickups();
     this.checkHits();
     this.obstacles = this.obstacles.filter(o => o.s + o.len > this.distance - 12);
   }
@@ -180,20 +224,45 @@ export class Sim {
     for (let i = this.carrots.length - 1; i >= 0; i--) {
       const c = this.carrots[i];
       if (c.s < this.distance - 4) { this.carrots.splice(i, 1); continue; }
+      if (this.powers.magnet > 0 && c.s - this.distance < MAGNET_RANGE) c.pulled = true;
       const near = Math.abs(c.s - this.distance) < 1.2 && Math.abs(LANE_X[c.lane] - this.x) < 0.9;
-      if (near && c.y > this.y - 0.4 && c.y < top + 0.4) {
+      // Pulled carrots fly to the runner, so lane and height no longer matter.
+      if (c.pulled ? c.s - this.distance < 0.6 : near && c.y > this.y - 0.4 && c.y < top + 0.4) {
         this.carrots.splice(i, 1);
         this.carrotsTaken++;
+        this.points += 10 * this.multiplier;
         this.emit({ type: 'carrot', lane: c.lane, y: c.y });
       }
     }
   }
 
+  private collectPickups() {
+    const top = this.y + (this.sliding ? 0.9 : 1.7);
+    for (let i = this.pickups.length - 1; i >= 0; i--) {
+      const p = this.pickups[i];
+      if (p.s < this.distance - 4) { this.pickups.splice(i, 1); continue; }
+      const near = Math.abs(p.s - this.distance) < 1.3 && Math.abs(LANE_X[p.lane] - this.x) < 1;
+      if (!near || p.y < this.y - 0.5 || p.y > top + 0.5) continue;
+      this.pickups.splice(i, 1);
+      if (p.kind === 'shoe') this.lives = Math.min(LIVES, this.lives + 1);
+      else this.powers[p.kind] = POWER_TIME[p.kind] * this.powerScale;
+      this.emit({ type: 'power', kind: p.kind, lane: p.lane, y: p.y });
+    }
+  }
+
   private checkHits() {
-    if (this.invincibleT > 0) return;
-    for (const o of this.obstacles) {
+    const spurt = this.powers.spurt > 0;
+    if (!spurt && (this.invincibleT > 0 || this.graceT > 0)) return;
+    for (let i = this.obstacles.length - 1; i >= 0; i--) {
+      const o = this.obstacles[i];
       if (this.distance + 0.35 < o.s || this.distance - 0.35 > o.s + o.len) continue;
       if (Math.abs(LANE_X[o.lane] - this.x) >= 1) continue;
+      if (spurt) {
+        // The final spurt bowls straight through whatever is in the way.
+        this.obstacles.splice(i, 1);
+        this.emit({ type: 'smash', kind: o.kind, lane: o.lane });
+        continue;
+      }
       const clear = o.kind === 'hurdle' ? this.y >= 0.85 : o.kind === 'gate' ? this.sliding : false;
       if (!clear) {
         this.hit = o.kind;
@@ -221,9 +290,26 @@ export class Sim {
         this.obstacles.push({ kind, lane, s: this.nextS, len });
       }
       if (this.rand() < 0.6) this.placeCarrots(row);
-      this.nextS += rowGap(this.nextS);
+      const gap = rowGap(this.nextS);
+      if (this.nextS >= this.nextPowerAt) this.placePickup(this.nextS + gap / 2);
+      this.nextS += gap;
     }
     this.nextS += rowGap(this.nextS) * 0.35;
+  }
+
+  /** Between two rows, where every lane is clear, on the carrot trail. */
+  private placePickup(s: number) {
+    this.nextPowerAt = s + POWER_GAP + this.rand() * POWER_GAP_RANDOM;
+    let kind: Power;
+    if (this.lives < LIVES && this.lastPower !== 'shoe' && this.rand() < 0.4) kind = 'shoe';
+    else {
+      const options = (Object.keys(POWER_TIME) as Timed[]).filter(k => k !== this.lastPower);
+      kind = options[Math.floor(this.rand() * options.length)];
+    }
+    this.lastPower = kind;
+    // Keep clear of the carrot trail, which may sit at the same spot.
+    this.carrots = this.carrots.filter(c => !(c.lane === this.carrotLane && Math.abs(c.s - s) < 1.5));
+    this.pickups.push({ kind, lane: this.carrotLane, s, y: 0.9 });
   }
 
   // Carrots follow the free lane closest to the previous trail.
