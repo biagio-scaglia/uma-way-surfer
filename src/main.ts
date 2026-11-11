@@ -483,6 +483,10 @@ async function main() {
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => { /* the game still works without it */ });
+    navigator.serviceWorker.ready.then(registration => {
+      const loaded = performance.getEntriesByType('resource').map(entry => entry.name);
+      registration.active?.postMessage({ loaded });
+    });
   });
 }
 
