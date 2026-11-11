@@ -48,7 +48,9 @@ html, body {
   pointer-events: none;
   font-family: var(--display);
   color: var(--snow);
+  animation: hud-in .35s cubic-bezier(.2, .8, .3, 1);
 }
+@keyframes hud-in { from { opacity: 0; transform: translateY(-24px); } }
 
 /* The score hangs from the top edge, like a small version of the saddle cloth. */
 .hud-tab {
@@ -64,9 +66,17 @@ html, body {
   border-radius: 0 0 22px 8px;
   box-shadow: 0 5px 0 var(--silk-deep);
 }
-#score { font-size: clamp(28px, 4.2vw, 42px); line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 3px 0 var(--silk-deep); }
+#score { --len: 5; --fs: clamp(28px, 4.2vw, 42px); font-size: calc(var(--fs) * min(1, 6 / var(--len))); line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 3px 0 var(--silk-deep); }
 
 #lives { display: flex; gap: 3px; }
+/* Passing the record: the plaque glints gold for a moment. */
+.hud-tab.record { animation: record .9s ease-out; }
+@keyframes record {
+  20% { transform: scale(1.08) rotate(-2deg); box-shadow: 0 5px 0 var(--silk-deep), 0 0 0 6px var(--gold), 0 0 28px var(--gold); }
+}
+/* A milestone: the goal bar flashes before it resets. */
+#goal.reached .goal-track { animation: reached .7s ease-out; }
+@keyframes reached { 25% { transform: scale(1.06); box-shadow: 0 0 0 4px var(--gold), 0 0 22px var(--gold); } }
 #lives svg { width: clamp(26px, 3.2vw, 34px); height: clamp(26px, 3.2vw, 34px); transition: opacity .2s, transform .2s; }
 #lives svg.lost { opacity: .32; transform: scale(.78); filter: grayscale(1); }
 #lives.hurt { animation: hurt .34s ease-out; }
@@ -132,6 +142,7 @@ html, body {
 }
 /* Time of day: a small badge that turns over when the sky changes. */
 #daytime {
+  flex: none;
   display: grid;
   place-items: center;
   width: 34px;
@@ -394,7 +405,7 @@ html, body {
 }
 @keyframes glint { 0% { left: -40%; } 30%, 100% { left: 130%; } }
 .calm .cta::after { display: none; }
-.calm #goal-fill, .calm .pick-face::after, .calm .pick.waiting .pick-face { animation: none; }
+.calm #hud, .calm .hud-tab.record, .calm #goal.reached .goal-track, .calm #goal-fill, .calm .pick-face::after, .calm .pick.waiting .pick-face { animation: none; }
 @media (hover: hover) {
   .cta:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--gold-deep); }
 }
@@ -573,7 +584,21 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
   .pick-face { width: 40px; height: 40px; }
   .cloth .credits { margin: 12px 0 0; font-size: 12px; line-height: 1.35; }
   #settings { flex-direction: column; align-items: flex-end; }
-  #goal { width: 30vw; }
+  /* Phones: score and goal on the left, carrots and pause on the right, the middle stays clear. */
+  #hud {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas: 'tab right' 'goal right';
+    align-items: start;
+  }
+  .hud-tab { grid-area: tab; justify-self: start; min-width: 0; padding-left: 12px; padding-right: 12px; }
+  #score { --fs: 32px; }
+  #lives svg { width: 24px; height: 24px; }
+  #goal { grid-area: goal; width: min(46vw, 200px); margin-top: 14px; }
+  .hud-right { grid-area: right; justify-self: end; }
+  .carrot-count { --len: 4; font-size: calc(22px * min(1, 5 / var(--len))); padding: 4px 12px 4px 7px; }
+  .pop { right: auto; left: 0; top: 100%; margin: 6px 0 0; }
+  #cue { top: 30%; }
   .stats { gap: 6px; }
   .stats li { padding: 4px 9px 5px 6px; font-size: 14px; }
   .stats b { font-size: 16px; }
@@ -590,6 +615,7 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
   .pick-face::after, .pick.waiting .pick-face { animation: none; }
+  #hud, .hud-tab.record, #goal.reached .goal-track { animation: none; }
   .cloth, .cloth.leaving, .rosette, #cue, #lives.hurt, .carrot-count.bump, .bump .pop, #goal-fill, #daytime.turn { animation: none; }
   .cta::after { display: none; }
   #toast.show { animation: toast-still 1.1s linear; }
