@@ -67,9 +67,17 @@ export async function loadCharacter(url: string, onProgress?: (ratio: number) =>
   gltf.scene.traverse(o => { if ((o as THREE.SkinnedMesh).isSkinnedMesh) meshes.push(o as THREE.SkinnedMesh); });
 
   const kept: THREE.SkinnedMesh[] = [];
+  const textured = (m: THREE.SkinnedMesh) => !!(m.material as THREE.MeshStandardMaterial).map;
   for (const mesh of meshes) {
-    if (kept.some(k => sameGeometry(k.geometry, mesh.geometry))) mesh.removeFromParent();
-    else kept.push(mesh);
+    const twin = kept.findIndex(k => sameGeometry(k.geometry, mesh.geometry));
+    if (twin < 0) { kept.push(mesh); continue; }
+    // Some exports duplicate the body and leave one copy untextured: keep the textured one.
+    if (!textured(kept[twin]) && textured(mesh)) {
+      kept[twin].removeFromParent();
+      kept[twin] = mesh;
+    } else {
+      mesh.removeFromParent();
+    }
   }
 
   const outlineMaterial = curved(
