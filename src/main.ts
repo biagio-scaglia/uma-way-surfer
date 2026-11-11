@@ -9,7 +9,7 @@ import { DayNight, type TimeOfDay } from './daynight';
 import { Effects } from './effects';
 import { bindInput } from './input';
 import { loadProps } from './props';
-import { LANE_X, MILESTONE, Sim, type Kind } from './sim';
+import { LANE_X, MILESTONE, POWER_TIME, Sim, type Kind, type Power, type Timed } from './sim';
 import { World } from './world';
 
 const STEP = 1 / 120;
@@ -28,6 +28,17 @@ const CUES_UNTIL_BEST = 600;
 const CARROT_COLORS = [0xff8412, 0xffc53d, 0xffffff];
 const CONFETTI = [0xc8173d, 0xffc53d, 0x1f62e0, 0xffffff, 0x5cb86b];
 const DUST = [0xe6d5ae, 0xf3eee3];
+const CALM_POWER_SCALE = 1.3;
+const POWER_ENDING = 2;
+const SPURT_FOV = 10;
+// The kicker says what the power-up does; the big word stays short enough for a phone.
+const POWERS: Record<Power, { kicker: string; word: string; icon: string; label: string; colors: number[] }> = {
+  double: { kicker: 'Punti doppi', word: 'x2!', icon: 'double', label: 'Punti x2', colors: [0xffd23f, 0xffffff, 0xffe27a] },
+  magnet: { kicker: 'Attira le carote', word: 'Calamita!', icon: 'magnet', label: 'Calamita', colors: [0xe8364a, 0xff7f9a, 0xffffff] },
+  spurt: { kicker: 'Invincibile', word: 'Scatto!', icon: 'bolt', label: 'Scatto finale', colors: [0x3ee0ff, 0x7befff, 0xffffff] },
+  shoe: { kicker: 'Ferro di cavallo', word: '+1 vita!', icon: 'shoe', label: 'Vita in più', colors: [0x7ee8a8, 0xffc53d, 0xffffff] },
+};
+const SMASH_COLORS: Record<Kind, number[]> = { hurdle: [0xff5a1f, 0xffffff, 0x1f7a3f], gate: [0x1f62e0, 0xffffff], block: [0xffc21f, 0x1c3250] };
 const CUES: Record<Kind, [string, string]> = {
   hurdle: ['↑', 'Salta'],
   gate: ['↓', 'Scivola'],
@@ -37,7 +48,7 @@ const CUES: Record<Kind, [string, string]> = {
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const ui = {
   score: $('score'), scoreTab: document.querySelector<HTMLElement>('.hud-tab')!, carrots: $('carrots'), hud: $('hud'), lives: $('lives'),
-  goal: $('goal'), goalMeters: $('goal-meters'), daytime: $('daytime'),
+  goal: $('goal'), goalMeters: $('goal-meters'), powers: $('powers'), pop: document.querySelector<HTMLElement>('.pop')!, daytime: $('daytime'),
   cue: $('cue'), cueKey: $('cue-key'), cueWord: $('cue-word'), toast: $('toast'),
   title: $('title'), start: $('start'), status: $('status'), titleBest: $('title-best'), titleBestValue: $('title-best-value'),
   over: $('over'), overScore: $('over-score'), overMeters: $('over-meters'), overCarrots: $('over-carrots'), overCarrotWord: $('over-carrot-word'), overBest: $('over-best'), rosette: $('rosette'), restart: $('restart'),
@@ -140,6 +151,7 @@ async function main() {
     if (sim.phase === 'over' && performance.now() - overAt < RESTART_LOCK_MS) return;
     if (sim.phase !== 'ready' && sim.phase !== 'over') return;
     sim.pace = settings.calm ? CALM_PACE : 1;
+    sim.powerScale = settings.calm ? CALM_POWER_SCALE : 1;
     showCues = settings.calm || best < CUES_UNTIL_BEST;
     recordCheered = best === 0;
     sim.start();
@@ -155,11 +167,14 @@ async function main() {
     if (!ui.title.hidden) titleBottom = ui.title.offsetTop + ui.title.offsetHeight;
   }
 
+  let baseFov = 60;
+  let rush = 0;
   function resize() {
     const w = innerWidth, h = innerHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    camera.fov = w < h ? 76 : 60;
+    baseFov = w < h ? 76 : 60;
+    camera.fov = baseFov + rush * SPURT_FOV;
     camera.updateProjectionMatrix();
     measureTitle();
   }
@@ -319,7 +334,33 @@ async function main() {
     retrigger(ui.toast, 'show');
   }
 
+  /** One badge per active power-up, with a ring that empties as time runs out. */
+  const powerBadges = new Map<Timed, HTMLLIElement>();
+  function syncPowers() {
+    for (const kind of Object.keys(POWER_TIME) as Timed[]) {
+      const left = sim.phase === 'over' ? 0 : sim.powers[kind];
+      let badge = powerBadges.get(kind);
+      if (left <= 0) {
+        if (badge) { badge.remove(); powerBadges.delete(kind); }
+        continue;
+      }
+      if (!badge) {
+        badge = document.createElement('li');
+        badge.className = 'power';
+        badge.dataset.kind = kind;
+        badge.innerHTML = `<svg aria-hidden="true"><use href="#i-${POWERS[kind].icon}"/></svg>`;
+        badge.setAttribute('aria-label', POWERS[kind].label);
+        ui.powers.append(badge);
+        powerBadges.set(kind, badge);
+      }
+      badge.style.setProperty('--t', (left / (POWER_TIME[kind] * sim.powerScale)).toFixed(3));
+      badge.classList.toggle('ending', left < POWER_ENDING);
+    }
+    ui.scoreTab.classList.toggle('double', sim.powers.double > 0);
+  }
+
   function syncHud() {
+    syncPowers();
     if (sim.score !== shownScore) {
       const text = (shownScore = sim.score).toLocaleString('it-IT');
       ui.score.textContent = text;
@@ -336,6 +377,7 @@ async function main() {
     if (sim.carrotsTaken !== shownCarrots) {
       ui.carrots.textContent = (shownCarrots = sim.carrotsTaken).toLocaleString('it-IT');
       ui.carrots.parentElement!.style.setProperty('--len', String(Math.max(4, ui.carrots.textContent.length)));
+      ui.pop.textContent = `+${10 * sim.multiplier}`;
       if (shownCarrots > 0) retrigger(ui.carrots.parentElement!, 'bump');
     }
     if (sim.lives !== shownLives) {
@@ -367,7 +409,8 @@ async function main() {
   /** While learning, shows the move for the obstacle straight ahead, at the moment it matters. */
   function syncCue() {
     let cue: Kind | null = null;
-    if (sim.phase === 'running' && showCues) {
+    // No instructions while the final spurt makes the runner invincible.
+    if (sim.phase === 'running' && showCues && sim.powers.spurt === 0) {
       let soonest = CUE_SECONDS;
       for (const o of sim.obstacles) {
         const eta = (o.s - sim.distance) / sim.speed;
@@ -405,6 +448,22 @@ async function main() {
           if (sim.lives > 0) sfx.hit(); else sfx.gameOver();
           retrigger(ui.lives, 'hurt');
           break;
+        case 'power': {
+          const info = POWERS[event.kind];
+          sfx.power();
+          cheer(info.kicker, info.word);
+          effects.burst(LANE_X[event.lane], event.y, 0, 30, info.colors, { speed: 5, size: 0.07, life: 0.9, scroll: 0.4 });
+          if (event.kind === 'shoe') retrigger(ui.lives, 'heal');
+          break;
+        }
+        case 'powerEnd':
+          sfx.powerEnd();
+          break;
+        case 'smash':
+          sfx.smash();
+          if (!settings.calm) shake = Math.max(shake, 0.35);
+          effects.burst(LANE_X[event.lane], 0.8, -0.5, 18, SMASH_COLORS[event.kind], { speed: 7, size: 0.09, life: 0.7, scroll: 0.8 });
+          break;
         case 'milestone':
           sfx.milestone();
           cheer('Traguardo', `${event.meters.toLocaleString('it-IT')} m!`);
@@ -419,6 +478,13 @@ async function main() {
   function placeCamera(dt: number) {
     intro += ((sim.phase === 'ready' ? 1 : 0) - intro) * (1 - Math.exp(-dt * 3.2));
     shake = Math.max(0, shake - dt * 2.6);
+    // The final spurt widens the view a little, for a sense of speed (not in calm mode).
+    const rushTarget = sim.powers.spurt > 0 && sim.phase === 'running' && !settings.calm ? 1 : 0;
+    if (Math.abs(rushTarget - rush) > 0.001) {
+      rush += (rushTarget - rush) * (1 - Math.exp(-dt * 4));
+      camera.fov = baseFov + rush * SPURT_FOV;
+      camera.updateProjectionMatrix();
+    }
     const angle = intro * Math.PI * 0.86;
     const portrait = camera.aspect < 1;
     overShift += ((sim.phase === 'over' && !portrait ? 1 : 0) - overShift) * (1 - Math.exp(-dt * 3));

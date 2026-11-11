@@ -43,6 +43,15 @@
       <path fill="#ffc53d" stroke="#16304d" stroke-width="1.600" stroke-linejoin="round" d="M6.500 3.500h11v4.500a5.500 5.500 0 0 1-11 0zM10.500 13.300h3l.5 4h-4zM7.500 17.300h9v3.200h-9z"/>
     </symbol>
     <symbol id="i-star" viewBox="0 0 24 24"><path fill="#ffc53d" stroke="#16304d" stroke-width="1.600" stroke-linejoin="round" d="m12 2.800 2.800 5.700 6.300.9-4.550 4.450 1.070 6.250L12 17.150l-5.620 2.950 1.070-6.250L2.900 9.400l6.300-.9z"/></symbol>
+    <symbol id="i-magnet" viewBox="0 0 24 24">
+      <path fill="#e8364a" stroke="#16304d" stroke-width="1.600" stroke-linejoin="round" d="M4 3.500h5v8a3 3 0 0 0 6 0v-8h5v8a8 8 0 0 1-16 0z"/>
+      <path fill="#d9dee8" stroke="#16304d" stroke-width="1.600" stroke-linejoin="round" d="M4 3.500h5v3.800H4zM15 3.500h5v3.800h-5z"/>
+    </symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path fill="#3ee0ff" stroke="#16304d" stroke-width="1.600" stroke-linejoin="round" d="M13.500 2 4.500 13.500h6L9 22l10-12.500h-6.300z"/></symbol>
+    <symbol id="i-double" viewBox="0 0 24 24">
+      <path fill="none" stroke="#16304d" stroke-width="1.600" stroke-linecap="round" d="M6.500 6.500H3.800c0 3 1.500 4.500 3.600 4.800M17.500 6.500h2.700c0 3-1.500 4.500-3.600 4.800"/>
+      <path fill="#ffd23f" stroke="#16304d" stroke-width="1.600" stroke-linejoin="round" d="M6.500 3.500h11v4.500a5.500 5.500 0 0 1-11 0zM10.500 13.300h3l.5 4h-4zM7.500 17.300h9v3.200h-9z"/>
+    </symbol>
     <symbol id="i-leaf" viewBox="0 0 24 24"><path fill="currentColor" d="M4.500 19.500C4.500 10.500 10.500 5 20 4c0 9.500-5 15.500-12.500 15.500-1.100 0-2.100 0-3 0z"/><path fill="none" stroke="var(--leaf-vein, #fff)" stroke-width="1.500" stroke-linecap="round" d="M7 17c2.500-4 6-6.800 9.500-8.500"/></symbol>
   </svg>
 
@@ -69,6 +78,7 @@
         <span id="carrots">0</span>
         <span class="pop" aria-hidden="true">+10</span>
       </div>
+      <ul id="powers" aria-label="Power-up attivi"></ul>
       <button id="pause" class="icon-button" aria-label="Metti in pausa"><svg aria-hidden="true"><use href="#i-pause"/></svg></button>
     </div>
   </div>
@@ -96,7 +106,7 @@
     <p id="title-best" class="record-chip" hidden><svg aria-hidden="true"><use href="#i-trophy"/></svg><span id="title-best-value"></span></p>
     <div id="status" role="status">Sto caricando il personaggio…<div class="load-track"><div id="load-fill"></div></div></div>
     <button id="start" class="cta" hidden><svg aria-hidden="true"><use href="#i-play"/></svg>Parti</button>
-    <p class="credits">Fangame non commerciale. Modello: <a class="model-link" href="https://sketchfab.com/3d-models/tokai-teio-uma-musume-c691aadbd14d4735810a01ac406fd940" target="_blank" rel="noopener">Tokai Teio - Uma Musume</a> di <a href="https://sketchfab.com/ansaldotoys2" target="_blank" rel="noopener">ansaldotoys2</a>, <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY 4.0</a>, con modifiche. Ambiente: <a href="https://kenney.nl/assets/nature-kit" target="_blank" rel="noopener">Kenney</a>, CC0.</p>
+    <p class="credits">Fangame non commerciale. Modello: <a class="model-link" href="https://sketchfab.com/3d-models/tokai-teio-uma-musume-c691aadbd14d4735810a01ac406fd940" target="_blank" rel="noopener">Tokai Teio - Uma Musume</a> di <a href="https://sketchfab.com/ansaldotoys2" target="_blank" rel="noopener">ansaldotoys2</a>, <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY 4.0</a>, con modifiche. Ambiente: <a href="https://kenney.nl/assets/nature-kit" target="_blank" rel="noopener">Kenney</a>; power-up: <a href="https://opengameart.org" target="_blank" rel="noopener">OpenGameArt</a>; CC0.</p>
   </section>
 
   <section id="paused" class="cloth" hidden>

@@ -198,6 +198,49 @@ html, body {
   to { opacity: 0; transform: translateY(-12px); }
 }
 
+/* Active power-ups, below the pause button so it never moves. */
+#powers { order: 2; display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.power {
+  --t: 1;
+  --ring: var(--gold);
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: conic-gradient(var(--ring) calc(var(--t) * 360deg), rgba(22, 48, 77, .35) 0);
+  box-shadow: 0 4px 0 rgba(22, 48, 77, .45);
+  animation: power-in .3s cubic-bezier(.3, 1.6, .5, 1);
+}
+.power::before { content: ''; position: absolute; inset: 5px; border-radius: 50%; background: var(--snow); }
+.power svg { position: relative; width: 28px; height: 28px; }
+.power[data-kind='magnet'] { --ring: #e8364a; }
+.power[data-kind='spurt'] { --ring: #3ee0ff; }
+.power.ending { animation: ending .5s ease-in-out infinite alternate; }
+@keyframes power-in { from { transform: scale(0); } }
+@keyframes ending { to { transform: scale(.88); opacity: .7; } }
+
+/* Points x2: the score plaque turns gold and wears its multiplier. */
+.hud-tab.double { background: linear-gradient(#ffd667, var(--gold)); color: var(--ink); box-shadow: 0 5px 0 var(--gold-deep); }
+.hud-tab.double #score { text-shadow: 0 3px 0 rgba(199, 138, 16, .6); }
+.hud-tab.double::after {
+  content: 'x2';
+  position: absolute;
+  right: -14px;
+  bottom: -12px;
+  padding: 4px 8px 5px;
+  border-radius: 99px;
+  background: var(--silk);
+  color: var(--snow);
+  font: 400 16px/1 var(--display);
+  box-shadow: 0 0 0 3px var(--gold);
+  transform: rotate(8deg);
+}
+.hud-tab { position: relative; }
+#lives.heal { animation: heal .6s ease-out; }
+@keyframes heal { 30% { transform: scale(1.18); filter: drop-shadow(0 0 8px #7ee8a8); } }
+
 .icon-button {
   display: grid;
   place-items: center;
@@ -216,7 +259,9 @@ html, body {
 .icon-button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 
 /* One instruction at a time, in the colour of the obstacle it refers to. */
+/* Above any celebration: this is the one message that keeps the runner safe. */
 #cue {
+  z-index: 2;
   --cue: var(--jump);
   --cue-text: var(--snow);
   position: fixed;
@@ -405,7 +450,7 @@ html, body {
 }
 @keyframes glint { 0% { left: -40%; } 30%, 100% { left: 130%; } }
 .calm .cta::after { display: none; }
-.calm #hud, .calm .hud-tab.record, .calm #goal.reached .goal-track, .calm #goal-fill, .calm .pick-face::after, .calm .pick.waiting .pick-face { animation: none; }
+.calm .power, .calm .power.ending, .calm #lives.heal, .calm #hud, .calm .hud-tab.record, .calm #goal.reached .goal-track, .calm #goal-fill, .calm .pick-face::after, .calm .pick.waiting .pick-face { animation: none; }
 @media (hover: hover) {
   .cta:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--gold-deep); }
 }
@@ -597,9 +642,12 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
   #lives svg { width: 24px; height: 24px; }
   #goal { grid-area: goal; width: min(46vw, 200px); margin-top: 14px; }
   .hud-right { grid-area: right; justify-self: end; }
+  .power { width: 44px; height: 44px; }
+  .power svg { width: 24px; height: 24px; }
   .carrot-count { --len: 4; font-size: calc(22px * min(1, 5 / var(--len))); padding: 4px 12px 4px 7px; }
   .pop { right: auto; left: 0; top: 100%; margin: 6px 0 0; }
   #cue { top: 30%; }
+  #toast { top: 39%; }
   .stats { gap: 6px; }
   .stats li { padding: 4px 9px 5px 6px; font-size: 14px; }
   .stats b { font-size: 16px; }
@@ -616,7 +664,7 @@ a:focus-visible { outline: 2px solid var(--snow); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
   .pick-face::after, .pick.waiting .pick-face { animation: none; }
-  #hud, .hud-tab.record, #goal.reached .goal-track { animation: none; }
+  #hud, .hud-tab.record, #goal.reached .goal-track, .power, .power.ending, #lives.heal { animation: none; }
   .cloth, .cloth.leaving, .rosette, #cue, #lives.hurt, .carrot-count.bump, .bump .pop, #goal-fill, #daytime.turn { animation: none; }
   .cta::after { display: none; }
   #toast.show { animation: toast-still 1.1s linear; }
