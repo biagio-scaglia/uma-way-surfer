@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { LANE_X, MILESTONE, type Kind, type Sim } from './sim';
+import { LANE_X, MAGNET_RANGE, MILESTONE, type Kind, type Power, type Sim } from './sim';
 import type { Props } from './props';
 import { curve, curved, toonGradient } from './toon';
 
@@ -11,6 +11,19 @@ const VISIBLE_NEAR = 12;
 const VISIBLE_FAR = -215;
 const OCCLUSION = 0.2;
 const CARROT_SCALE = 0.85;
+const PICKUP_SIZE = 0.8;
+
+/**
+ * Each power-up has its own shape and a bubble in its own colour, none of them used by obstacles,
+ * so it reads as "something to grab" at a glance.
+ */
+const POWER_LOOK: Record<Power, { model: string; color: number; bubble: number; turn?: [number, number, number] }> = {
+  double: { model: 'power_trophy', color: 0xffd23f, bubble: 0xffe27a },
+  magnet: { model: 'power_magnet', color: 0xe8364a, bubble: 0xff7f9a, turn: [-Math.PI / 2, 0, 0] },
+  spurt: { model: 'power_bolt', color: 0x3ee0ff, bubble: 0x7befff },
+  shoe: { model: 'power_horseshoe', color: 0xeef2f8, bubble: 0x7ee8a8, turn: [-Math.PI / 2, 0, 0] },
+};
+const MAGNET_TIP = 0xd9dee8;
 
 // The background stays pale and quiet; only what the player must react to is saturated.
 const COLORS = {
@@ -432,6 +445,28 @@ function buildLampLights() {
   return [glassMesh, glow, poolMesh] as const;
 }
 
+function pickupGeometry(props: Props, kind: Power) {
+  const look = POWER_LOOK[kind];
+  const parts = (props.get(look.model) ?? []).map(part => {
+    const g = part.geometry.clone();
+    if (look.turn) g.rotateX(look.turn[0]).rotateY(look.turn[1]).rotateZ(look.turn[2]);
+    return g.scale(PICKUP_SIZE, PICKUP_SIZE, PICKUP_SIZE);
+  });
+  const g = paint(mergeGeometries(parts), look.color);
+  if (kind === 'magnet') {
+    // Silver tips on the bottom quarter, as on a real horseshoe magnet.
+    g.computeBoundingBox();
+    const { min, max } = g.boundingBox!;
+    const position = g.attributes.position;
+    const color = g.attributes.color;
+    const tip = new THREE.Color(MAGNET_TIP);
+    for (let i = 0; i < position.count; i++) {
+      if (position.getY(i) < min.y + (max.y - min.y) * 0.28) color.setXYZ(i, tip.r, tip.g, tip.b);
+    }
+  }
+  return g;
+}
+
 function shadowTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 128;
@@ -450,6 +485,10 @@ export class World {
   private instances: Record<Kind, THREE.InstancedMesh>;
   private carrots: THREE.InstancedMesh;
   private arches: THREE.InstancedMesh;
+  private pickups: Record<Power, THREE.InstancedMesh>;
+  private bubbles: THREE.InstancedMesh;
+  private rings: THREE.InstancedMesh;
+  private tint = new THREE.Color();
   private shadow: THREE.Mesh;
   private lampGlass: THREE.Mesh<G, THREE.MeshBasicMaterial>;
   private lampGlow: THREE.Points<G, THREE.PointsMaterial>;
@@ -491,6 +530,24 @@ export class World {
     };
     this.carrots = instanced(carrotGeometry(), 180);
     this.arches = instanced(archGeometry(), 2);
+    this.pickups = {
+      double: instanced(pickupGeometry(props, 'double'), 8),
+      magnet: instanced(pickupGeometry(props, 'magnet'), 8),
+      spurt: instanced(pickupGeometry(props, 'spurt'), 8),
+      shoe: instanced(pickupGeometry(props, 'shoe'), 8),
+    };
+    const glow = (geometry: G, opacity: number) => {
+      const mesh = new THREE.InstancedMesh(geometry, curved(new THREE.MeshBasicMaterial({
+        transparent: true, opacity, depthWrite: false, fog: false,
+      })), 8);
+      mesh.setColorAt(0, this.tint.setHex(0xffffff));
+      mesh.frustumCulled = false;
+      mesh.count = 0;
+      scene.add(mesh);
+      return mesh;
+    };
+    this.bubbles = glow(new THREE.IcosahedronGeometry(0.62, 3), 0.22);
+    this.rings = glow(new THREE.TorusGeometry(0.64, 0.035, 6, 40), 0.95);
 
     this.shadow = new THREE.Mesh(
       new THREE.PlaneGeometry(1.5, 1.5).rotateX(-Math.PI / 2),
@@ -523,11 +580,45 @@ export class World {
     for (const c of sim.carrots) {
       const z = sim.distance - c.s;
       if (z > VISIBLE_NEAR || z < VISIBLE_FAR) continue;
-      this.matrix.makeTranslation(LANE_X[c.lane], c.y + Math.sin(time * 4 + c.s) * 0.06, z).multiply(this.spin);
+      let x = LANE_X[c.lane];
+      let y = c.y + Math.sin(time * 4 + c.s) * 0.06;
+      if (c.pulled) {
+        // Drawn in by the magnet: glide towards the runner's chest as they get close.
+        const t = THREE.MathUtils.smoothstep(1 - (c.s - sim.distance) / MAGNET_RANGE, 0, 1);
+        x += (sim.x - x) * t;
+        y += (sim.y + 1 - y) * t;
+      }
+      this.matrix.makeTranslation(x, y, z).multiply(this.spin);
       this.carrots.setMatrixAt(carrotCount++, this.matrix);
     }
     this.carrots.count = carrotCount;
     this.carrots.instanceMatrix.needsUpdate = true;
+
+    const pickupCounts: Record<Power, number> = { double: 0, magnet: 0, spurt: 0, shoe: 0 };
+    let glowCount = 0;
+    for (const p of sim.pickups) {
+      const z = sim.distance - p.s;
+      if (z > VISIBLE_NEAR || z < VISIBLE_FAR) continue;
+      const y = p.y + Math.sin(time * 3 + p.s) * 0.1;
+      this.matrix.makeRotationY(time * 2).setPosition(LANE_X[p.lane], y, z);
+      this.pickups[p.kind].setMatrixAt(pickupCounts[p.kind]++, this.matrix);
+      this.tint.setHex(POWER_LOOK[p.kind].bubble);
+      this.matrix.makeTranslation(LANE_X[p.lane], y, z);
+      this.bubbles.setMatrixAt(glowCount, this.matrix);
+      this.bubbles.setColorAt(glowCount, this.tint);
+      this.matrix.makeRotationX(Math.PI / 2 + Math.sin(time * 2 + p.s) * 0.35).setPosition(LANE_X[p.lane], y, z);
+      this.rings.setMatrixAt(glowCount, this.matrix);
+      this.rings.setColorAt(glowCount++, this.tint);
+    }
+    for (const kind of Object.keys(pickupCounts) as Power[]) {
+      this.pickups[kind].count = pickupCounts[kind];
+      this.pickups[kind].instanceMatrix.needsUpdate = true;
+    }
+    for (const mesh of [this.bubbles, this.rings]) {
+      mesh.count = glowCount;
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    }
 
     let archCount = 0;
     for (const meters of [sim.nextMilestone, sim.nextMilestone - MILESTONE]) {

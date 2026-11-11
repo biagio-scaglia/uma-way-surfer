@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // Kenney's Nature Kit (CC0): small flat-shaded models, one material per part.
-const URLS = import.meta.glob('../models/kenney/*.glb', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
+// Power-up models from OpenGameArt (CC0), converted to GLB: see models/power/README.md.
+const URLS = import.meta.glob(['../models/kenney/*.glb', '../models/power/*.glb'], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
 /** One part of a prop: its geometry in model space and the name of the material it used. */
 export interface PropPart { material: string; geometry: THREE.BufferGeometry }
