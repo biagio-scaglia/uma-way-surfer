@@ -6,7 +6,7 @@ Fangame non commerciale: un endless runner 3D a tre corsie, ambientato in un ipp
 
 Dopo la prima visita il gioco resta salvato nel browser: le volte successive parte subito, anche senza connessione. Se ti è piaciuto, lascia una stella al repository ⭐
 
-Scegli chi corre, Tokai Teio o Meisho Doto, salta le staccionate, scivola sotto gli striscioni, evita i box di partenza e raccogli carote. Ogni 250 metri c'è un traguardo. Intanto passa la giornata: verso i 400 metri il sole tramonta in fondo alla pista, poi arrivano luna, stelle e lampioni accesi, e a 1000 metri torna l'alba.
+Scegli chi corre tra Tokai Teio, Meisho Doto e Daiwa Scarlet, salta le staccionate, scivola sotto gli striscioni, evita i box di partenza e raccogli carote. Ogni 250 metri c'è un traguardo. Intanto passa la giornata: verso i 400 metri il sole tramonta in fondo alla pista, poi arrivano luna, stelle e lampioni accesi, e a 1000 metri torna l'alba.
 
 ## Comandi
 
@@ -49,6 +49,7 @@ Modelli di [ansaldotoys2](https://sketchfab.com/ansaldotoys2), licenza [CC-BY 4.
 
 - ["Tokai Teio - Uma Musume"](https://sketchfab.com/3d-models/tokai-teio-uma-musume-c691aadbd14d4735810a01ac406fd940)
 - ["Meisho Doto - Uma Musume"](https://sketchfab.com/3d-models/meisho-doto-uma-musume-91c12bfd72b843929dc88a3857ce3593)
+- ["Daiwa Scarlet - Uma Musume"](https://sketchfab.com/3d-models/daiwa-scarlet-uma-musume-6fdd3062fa924b15a4dd0f7493c44617)
 
 In gioco materiali e geometria vengono adattati (materiali toon, rimozione della mesh duplicata) e il modello è animato via codice.
 
