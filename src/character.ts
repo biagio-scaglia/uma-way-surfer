@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader, type GLTFLoaderPlugin, type GLTFParser } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { curved, toonGradient } from './toon';
 
 const HEIGHT = 1.7;
@@ -59,6 +60,8 @@ export interface Character {
 export async function loadCharacter(url: string, onProgress?: (ratio: number) => void): Promise<Character> {
   const loader = new GLTFLoader();
   loader.register(parser => new SpecGlossPlugin(parser));
+  // The models are meshopt-compressed by scripts/optimize-models.mjs.
+  loader.setMeshoptDecoder(MeshoptDecoder);
   const gltf = await loader.loadAsync(url, event => {
     if (event.total) onProgress?.(event.loaded / event.total);
   });
@@ -92,6 +95,7 @@ export async function loadCharacter(url: string, onProgress?: (ratio: number) =>
 
   const skeleton = kept[0].skeleton;
   for (const mesh of kept) {
+    if (!mesh.geometry.attributes.normal) mesh.geometry.computeVertexNormals();
     for (const name of Object.keys(mesh.geometry.attributes)) {
       if (!KEEP_ATTRIBUTES.has(name)) mesh.geometry.deleteAttribute(name);
     }
@@ -102,7 +106,7 @@ export async function loadCharacter(url: string, onProgress?: (ratio: number) =>
       gradientMap: toonGradient,
     }), addRim);
     mesh.frustumCulled = false;
-    mesh.bind(skeleton, mesh.bindMatrix);
+    // Every mesh keeps the skin the loader gave it: they all move the same bones.
 
     const small = mesh.geometry.index!.count / 3 < 100;
     // No outline on the face: the expanded hull shows through the lips as a black gash.
