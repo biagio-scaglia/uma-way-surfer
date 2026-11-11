@@ -36,13 +36,13 @@ const CUES: Record<Kind, [string, string]> = {
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const ui = {
-  score: $('score'), carrots: $('carrots'), hud: $('hud'), lives: $('lives'),
+  score: $('score'), scoreTab: document.querySelector<HTMLElement>('.hud-tab')!, carrots: $('carrots'), hud: $('hud'), lives: $('lives'),
   goal: $('goal'), goalMeters: $('goal-meters'), daytime: $('daytime'),
   cue: $('cue'), cueKey: $('cue-key'), cueWord: $('cue-word'), toast: $('toast'),
   title: $('title'), start: $('start'), status: $('status'), titleBest: $('title-best'), titleBestValue: $('title-best-value'),
   over: $('over'), overScore: $('over-score'), overMeters: $('over-meters'), overCarrots: $('over-carrots'), overCarrotWord: $('over-carrot-word'), overBest: $('over-best'), rosette: $('rosette'), restart: $('restart'),
   paused: $('paused'), resume: $('resume'), pause: $('pause'),
-  pauseScore: $('pause-score'), pauseMeters: $('pause-meters'), pauseCarrots: $('pause-carrots'), toastMeters: $('toast-meters'),
+  pauseScore: $('pause-score'), pauseMeters: $('pause-meters'), pauseCarrots: $('pause-carrots'), toastMeters: $('toast-meters'), toastKicker: $('toast-kicker'),
   settings: $('settings'), sound: $('toggle-sound'), calm: $('toggle-calm'),
 };
 
@@ -133,6 +133,7 @@ async function main() {
 
   let best = readBest();
   let showCues = true;
+  let recordCheered = false;
   let overAt = 0;
 
   const start = () => {
@@ -140,6 +141,7 @@ async function main() {
     if (sim.phase !== 'ready' && sim.phase !== 'over') return;
     sim.pace = settings.calm ? CALM_PACE : 1;
     showCues = settings.calm || best < CUES_UNTIL_BEST;
+    recordCheered = best === 0;
     sim.start();
   };
   bindInput(sim, start);
@@ -299,10 +301,29 @@ async function main() {
     }
   }
 
+  function cheer(kicker: string, text: string) {
+    ui.toastKicker.textContent = kicker;
+    ui.toastMeters.textContent = text;
+    retrigger(ui.toast, 'show');
+  }
+
   function syncHud() {
-    if (sim.score !== shownScore) ui.score.textContent = (shownScore = sim.score).toLocaleString('it-IT');
+    if (sim.score !== shownScore) {
+      const text = (shownScore = sim.score).toLocaleString('it-IT');
+      ui.score.textContent = text;
+      // Long scores shrink a little so the plaque never grows into the rest of the HUD.
+      ui.score.style.setProperty('--len', String(Math.max(5, text.length)));
+    }
+    if (!recordCheered && sim.phase === 'running' && sim.score > best) {
+      // Beating the record mid-run deserves a cheer right away, not only at the end.
+      recordCheered = true;
+      cheer('Nuovo', 'Record!');
+      sfx.milestone();
+      retrigger(ui.scoreTab, 'record');
+    }
     if (sim.carrotsTaken !== shownCarrots) {
-      ui.carrots.textContent = String(shownCarrots = sim.carrotsTaken);
+      ui.carrots.textContent = (shownCarrots = sim.carrotsTaken).toLocaleString('it-IT');
+      ui.carrots.parentElement!.style.setProperty('--len', String(Math.max(4, ui.carrots.textContent.length)));
       if (shownCarrots > 0) retrigger(ui.carrots.parentElement!, 'bump');
     }
     if (sim.lives !== shownLives) {
@@ -374,8 +395,8 @@ async function main() {
           break;
         case 'milestone':
           sfx.milestone();
-          ui.toastMeters.textContent = `${event.meters.toLocaleString('it-IT')} m!`;
-          retrigger(ui.toast, 'show');
+          cheer('Traguardo', `${event.meters.toLocaleString('it-IT')} m!`);
+          retrigger(ui.goal, 'reached');
           effects.burst(sim.x, 2, -3, 46, CONFETTI, { speed: 6, size: 0.065, life: 1.1, scroll: 0.5 });
           break;
       }
